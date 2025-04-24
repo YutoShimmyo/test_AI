@@ -11,11 +11,35 @@ document.addEventListener('DOMContentLoaded', function() {
     const correctAnswerElement = document.getElementById('correct-answer');
     const answerWordElement = document.getElementById('answer-word');
 
-    let currentWord = 'しりとり';
+    let currentWord = 'エーアイトシリトリ';
     let timer;
-    let timeLeft = 10;
+    let timeLeft = 60;
     let usedWords = [currentWord];
     let gameActive = false;
+    const wordImage = document.getElementById('word-image');
+
+    // 単語から絵を取得して表示
+    async function fetchWordImage(word) {
+        try {
+            const response = await fetch('http://localhost:5000/get_image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ word: word })
+            });
+            
+            if (!response.ok) throw new Error('絵の取得に失敗しました');
+            
+            const blob = await response.blob();
+            const imageUrl = URL.createObjectURL(blob);
+            wordImage.src = imageUrl;
+            wordImage.style.display = 'block';
+        } catch (error) {
+            console.error('Error:', error);
+            wordImage.style.display = 'none';
+        }
+    }
 
     // ゲーム開始処理
     startButton.addEventListener('click', function() {
@@ -70,12 +94,21 @@ document.addEventListener('DOMContentLoaded', function() {
         let correctNextWord = '';
         
         if (isUserInput) {
+            // カタカナチェック
+            const katakanaRegex = /^[\u30A0-\u30FF]+$/;
+            if (!katakanaRegex.test(userAnswer)) {
+                resultElement.textContent = 'カタカナで入力してください';
+                resultElement.className = 'incorrect';
+                inputWord.value = '';
+                return;
+            }
+
             // しりとりのルールチェック
             const lastChar = currentWord.slice(-1);
             const firstChar = userAnswer.charAt(0);
             
             // 「ん」で終わる単語はNG
-            if (userAnswer.slice(-1) === 'ん') {
+            if (userAnswer.slice(-1) === 'ン') {
                 resultElement.textContent = '×';
                 resultElement.className = 'incorrect';
                 correctNextWord = getRandomWord(lastChar);
