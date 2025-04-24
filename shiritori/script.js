@@ -21,9 +21,9 @@ const buttons = {
     start: document.getElementById('start-button'),
     submitTarget: document.getElementById('to_input_word-screen'),
     submitWord: document.getElementById('to_wait-screen'),
-    next: document.getElementById('result-screen').querySelector('#start-button'),
     ready: document.getElementById('to_read_target-screen'),
-    nextQuestion: document.getElementById('result-screen').querySelector('#start-button')
+    next: document.getElementById('to_result-screen'),
+    nextQuestion: document.getElementById('to_init')
 };
 
 const inputs = {
@@ -69,7 +69,7 @@ function showScreen(screenName) {
 
 // 初期化処理
 function initializeGame() {
-    print('Game initialized');
+    console.log('Game initialized');
     if (!checkElements()) {
         alert('ゲームの初期化に失敗しました。コンソールを確認してください');
         return;
@@ -128,7 +128,7 @@ buttons.submitWord.addEventListener('click', () => {
     
     gameState.description = description;
     showScreen('wait');
-    generateImage(description);
+    //generateImage(description);
 });
 
 // 画像生成処理
@@ -171,7 +171,9 @@ buttons.ready.addEventListener('click', () => {
 
 // 回答処理
 buttons.next.addEventListener('click', () => {
+    console.log('Answer button clicked');
     const answer = inputs.answer.value.trim();
+    console.log('Answer:', answer);
     if (answer === '') return;
     
     // 正解判定（簡易実装）
