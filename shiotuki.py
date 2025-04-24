@@ -5,6 +5,8 @@ def generate_image_prompt(input_text: str) -> str:
         script_type = "カタカナ"
     elif all('\u4e00' <= ch <= '\u9fff' for ch in input_text):
         script_type = "漢字"
+    elif all(ch.isascii() and ch.isalpha() for ch in input_text):
+        script_type = "英語"
     else:
         script_type = "文字"
 
