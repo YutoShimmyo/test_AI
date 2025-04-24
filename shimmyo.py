@@ -29,8 +29,10 @@ def generate_image_prompt(input_text: str) -> str:
 
 @app.route('/get_image', methods=['POST'])
 def get_image():
+    print("Received request to /get_image")
     data = request.json
     word = data.get("word")
+    print(f"Received word: {word}")
     if not word:
         return jsonify({"error": "No word provided"}), 400
 
