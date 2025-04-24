@@ -151,9 +151,50 @@ buttons.submitWord.addEventListener('click', () => {
     
     gameState.description = description;
     showScreen('wait');
+    buttons.ready.disabled = true;
+    buttons.ready.style.backgroundColor = '#ccc';
+    buttons.ready.style.cursor = 'not-allowed';
     gene("車")
     //wordtest = getImage("aaa");
     //generateImage(description);
+});
+
+async function generateImage(description) {
+    try {
+        if (!apiConfig.imageGeneratorUrl) {
+            throw new Error('画像生成APIのURLが設定されていません');
+        }
+
+        const response = await fetch(apiConfig.imageGeneratorUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ word: description })
+        });
+
+        if (!response.ok) throw new Error('画像生成に失敗しました');
+
+        const result = await response.json();
+        if (result.image) {
+            displayElements.wordImage.src = `data:image/png;base64,${result.image}`;
+            displayElements.wordImage.style.display = 'block';
+            buttons.ready.disabled = false; // 画像生成成功後にボタンを有効化
+            buttons.ready.style.backgroundColor = '#007bff';
+            buttons.ready.style.cursor = 'pointer';
+        } else {
+            throw new Error('画像データが返されませんでした');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('画像生成中にエラーが発生しました: ' + error.message);
+        displayElements.wordImage.style.display = 'none';
+    }
+}
+
+// 待機画面から回答画面へ
+buttons.ready.addEventListener('click', () => {
+    showScreen('readTarget');
 });
 
 
@@ -192,40 +233,9 @@ async function gene(prompt){
 
 }
 
-async function generateImage(description) {
-    try {
-        if (!apiConfig.imageGeneratorUrl) {
-            throw new Error('画像生成APIのURLが設定されていません');
-        }
 
-        const response = await fetch(apiConfig.imageGeneratorUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ word: description })
-        });
 
-        if (!response.ok) throw new Error('画像生成に失敗しました');
 
-        const result = await response.json();
-        if (result.image) {
-            displayElements.wordImage.src = `data:image/png;base64,${result.image}`;
-            displayElements.wordImage.style.display = 'block';
-        } else {
-            throw new Error('画像データが返されませんでした');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('画像生成中にエラーが発生しました: ' + error.message);
-        displayElements.wordImage.style.display = 'none';
-    }
-}
-
-// 待機画面から回答画面へ
-buttons.ready.addEventListener('click', () => {
-    showScreen('readTarget');
-});
 
 // 回答処理
 buttons.next.addEventListener('click', () => {
