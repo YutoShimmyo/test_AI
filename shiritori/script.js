@@ -1,153 +1,202 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const startButton = document.getElementById('start-button');
-    const titleScreen = document.getElementById('title-screen');
-    const gameScreen = document.getElementById('game-screen');
-    const currentWordElement = document.getElementById('current-word');
-    const inputWord = document.getElementById('input-word');
-    const submitButton = document.getElementById('submit-button');
-    const resultElement = document.getElementById('result');
-    const wordHistory = document.getElementById('word-history');
-    const timerElement = document.getElementById('timer');
-    const correctAnswerElement = document.getElementById('correct-answer');
-    const answerWordElement = document.getElementById('answer-word');
+// ゲームの状態管理
+const gameState = {
+    currentScreen: 'title',
+    currentWord: '',
+    description: '',
+    usedWords: [],
+    playerTurn: 1
+};
 
-    let currentWord = 'しりとり';
-    let timer;
-    let timeLeft = 10;
-    let usedWords = [currentWord];
-    let gameActive = false;
+// DOM要素の取得
+const screens = {
+    title: document.getElementById('title-screen'),
+    inputTarget: document.getElementById('input_target-screen'),
+    inputWord: document.getElementById('input_word-screen'),
+    wait: document.getElementById('wait-screen'),
+    readTarget: document.getElementById('read_target-screen'),
+    result: document.getElementById('result-screen')
+};
 
+const buttons = {
+    start: document.getElementById('start-button'),
+    submitTarget: document.getElementById('to_input_word-screen'),
+    submitWord: document.getElementById('to_wait-screen'),
+    next: document.getElementById('result-screen').querySelector('#start-button'),
+    ready: document.getElementById('to_read_target-screen'),
+    nextQuestion: document.getElementById('result-screen').querySelector('#start-button')
+};
+
+const inputs = {
+    target: document.getElementById('input_target-screen').querySelector('#input-word'),
+    word: document.getElementById('input_word-screen').querySelector('#input-word'),
+    answer: document.getElementById('read_target-screen').querySelector('#input-word')
+};
+
+const displayElements = {
+    currentWord: document.getElementById('input_word-screen').querySelector('#current-word'),
+    wordImage: document.getElementById('word-image')
+};
+
+// DOM要素の存在確認
+function checkElements() {
+    const missingElements = [];
+    Object.entries(screens).forEach(([name, element]) => {
+        if (!element) missingElements.push(name);
+    });
+    Object.entries(buttons).forEach(([name, element]) => {
+        if (!element) missingElements.push(`button:${name}`);
+    });
+    if (missingElements.length > 0) {
+        console.error('Missing elements:', missingElements);
+        return false;
+    }
+    return true;
+}
+
+// 画面遷移関数
+function showScreen(screenName) {
+    console.log(`Showing screen: ${screenName}`);
+    Object.values(screens).forEach(screen => {
+        if (screen) screen.style.display = 'none';
+    });
+    if (screens[screenName]) {
+        screens[screenName].style.display = 'block';
+        gameState.currentScreen = screenName;
+    } else {
+        console.error(`Screen not found: ${screenName}`);
+    }
+}
+
+// 初期化処理
+function initializeGame() {
+    print('Game initialized');
+    if (!checkElements()) {
+        alert('ゲームの初期化に失敗しました。コンソールを確認してください');
+        return;
+    }
+    
+    // 初期表示設定
+    Object.values(screens).forEach(screen => {
+        if (screen) screen.style.display = 'none';
+    });
+    
+    showScreen('title');
+    
     // ゲーム開始処理
-    startButton.addEventListener('click', function() {
-        titleScreen.style.display = 'none';
-        gameScreen.style.display = 'block';
-        currentWordElement.textContent = `最初の単語: ${currentWord}`;
-        gameActive = true;
-        startTimer();
+    buttons.start.addEventListener('click', () => {
+        gameState.currentWord = 'しりとり';
+        gameState.usedWords = [gameState.currentWord];
+        showScreen('inputTarget');
     });
+}
 
-    // タイマー開始
-    function startTimer() {
-        clearInterval(timer);
-        timeLeft = 10;
-        timerElement.textContent = timeLeft;
-        
-        timer = setInterval(function() {
-            timeLeft--;
-            timerElement.textContent = timeLeft;
-            
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                checkAnswer(false);
-            }
-        }, 1000);
+// お題入力処理
+buttons.submitTarget.addEventListener('click', () => {
+    const targetWord = inputs.target.value.trim();
+    if (targetWord === '') return;
+    
+    // しりとりのルールチェック
+    const lastChar = gameState.currentWord.slice(-1);
+    const firstChar = targetWord.charAt(0);
+    
+    if (lastChar !== firstChar) {
+        alert(`「${lastChar}」から始まる単語を入力してください`);
+        return;
     }
-
-    // 回答送信処理
-    submitButton.addEventListener('click', function() {
-        if (!gameActive) return;
-        
-        const userAnswer = inputWord.value.trim();
-        if (userAnswer === '') return;
-        
-        checkAnswer(true);
-    });
-
-    // エンターキーでも回答可能
-    inputWord.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && gameActive) {
-            const userAnswer = inputWord.value.trim();
-            if (userAnswer === '') return;
-            
-            checkAnswer(true);
-        }
-    });
-
-    // 正誤判定
-    function checkAnswer(isUserInput) {
-        const userAnswer = isUserInput ? inputWord.value.trim() : '';
-        let isValid = false;
-        let correctNextWord = '';
-        
-        if (isUserInput) {
-            // しりとりのルールチェック
-            const lastChar = currentWord.slice(-1);
-            const firstChar = userAnswer.charAt(0);
-            
-            // 「ん」で終わる単語はNG
-            if (userAnswer.slice(-1) === 'ん') {
-                resultElement.textContent = '×';
-                resultElement.className = 'incorrect';
-                correctNextWord = getRandomWord(lastChar);
-            }
-            // 最初の文字が前の単語の最後の文字と一致するか
-            else if (lastChar === firstChar) {
-                // 既に使った単語かチェック
-                if (!usedWords.includes(userAnswer)) {
-                    isValid = true;
-                    usedWords.push(userAnswer);
-                    currentWord = userAnswer;
-                    currentWordElement.textContent = `次の単語: ${currentWord}`;
-                    resultElement.textContent = '〇';
-                    resultElement.className = 'correct';
-                } else {
-                    resultElement.textContent = '×';
-                    resultElement.className = 'incorrect';
-                    correctNextWord = getRandomWord(lastChar);
-                }
-            } else {
-                resultElement.textContent = '×';
-                resultElement.className = 'incorrect';
-                correctNextWord = getRandomWord(lastChar);
-            }
-        } else {
-            // 時間切れの場合
-            resultElement.textContent = '×';
-            resultElement.className = 'incorrect';
-            correctNextWord = getRandomWord(currentWord.slice(-1));
-        }
-        
-        // 履歴に追加
-        addToHistory(userAnswer, isValid);
-        
-        // 不正解の場合は正解を表示
-        if (!isValid) {
-            answerWordElement.textContent = correctNextWord;
-            correctAnswerElement.style.display = 'block';
-            usedWords.push(correctNextWord);
-            currentWord = correctNextWord;
-        } else {
-            correctAnswerElement.style.display = 'none';
-        }
-        
-        // 入力欄をクリア
-        inputWord.value = '';
-        
-        // タイマーをリセット
-        startTimer();
+    
+    if (gameState.usedWords.includes(targetWord)) {
+        alert('その単語は既に使われています');
+        return;
     }
-
-    // 履歴に追加
-    function addToHistory(word, isValid) {
-        const li = document.createElement('li');
-        li.textContent = word;
-        li.className = isValid ? 'correct' : 'incorrect';
-        wordHistory.appendChild(li);
-        wordHistory.scrollTop = wordHistory.scrollHeight;
-    }
-
-    // ランダムな単語を取得（簡易実装）
-    function getRandomWord(startChar) {
-        const words = {
-            'り': ['りんご', 'りす', 'りゅう'],
-            'ご': ['ごま', 'ごりら', 'ごはん'],
-            'ま': ['まぐろ', 'まくら', 'まんが'],
-            'ら': ['らくだ', 'らっぱ', 'らーめん'],
-            'ん': ['ん？終わりです！'],
-            // 他の文字に対応する単語を追加
-        };
-        
-        const availableWords = words[startChar] || ['しりとり']; // デフォルト
-        return availableWords[Math.floor(Math.random() * availableWords.length)];
-    }
+    
+    gameState.currentWord = targetWord;
+    gameState.usedWords.push(targetWord);
+    showScreen('inputWord');
 });
+
+// 説明文字入力処理
+buttons.submitWord.addEventListener('click', () => {
+    const description = inputs.word.value.trim();
+    if (description === '') return;
+    
+    // 漢字のみチェック
+    const kanjiRegex = /^[\u4E00-\u9FFF]+$/;
+    if (!kanjiRegex.test(description)) {
+        alert('漢字のみで入力してください');
+        return;
+    }
+    
+    gameState.description = description;
+    showScreen('wait');
+    generateImage(description);
+});
+
+// 画像生成処理
+// 画像生成APIの設定
+const apiConfig = {
+    imageGeneratorUrl: 'http://localhost:5000/get_image'
+};
+
+async function generateImage(description) {
+    try {
+        if (!apiConfig.imageGeneratorUrl) {
+            throw new Error('画像生成APIのURLが設定されていません');
+        }
+        
+        const response = await fetch(apiConfig.imageGeneratorUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ word: description })
+        });
+        
+        if (!response.ok) throw new Error('画像生成に失敗しました');
+        
+        const blob = await response.blob();
+        const imageUrl = URL.createObjectURL(blob);
+        displayElements.wordImage.src = imageUrl;
+        displayElements.wordImage.style.display = 'block';
+    } catch (error) {
+        console.error('Error:', error);
+        alert('画像生成中にエラーが発生しました: ' + error.message);
+        displayElements.wordImage.style.display = 'none';
+    }
+}
+
+// 待機画面から回答画面へ
+buttons.ready.addEventListener('click', () => {
+    showScreen('readTarget');
+});
+
+// 回答処理
+buttons.next.addEventListener('click', () => {
+    const answer = inputs.answer.value.trim();
+    if (answer === '') return;
+    
+    // 正解判定（簡易実装）
+    const isCorrect = answer === gameState.description;
+    
+    // 結果画面表示
+    document.getElementById('result-screen').querySelector('h1').textContent = 
+        isCorrect ? '正解です！' : '残念、不正解です';
+    document.getElementById('result-screen').querySelector('h2:nth-of-type(1)').textContent = 
+        `お題: ${gameState.currentWord}`;
+    document.getElementById('result-screen').querySelector('h2:nth-of-type(2)').textContent = 
+        `正解: ${gameState.description}`;
+    
+    showScreen('result');
+});
+
+// 次の問題へ
+buttons.nextQuestion.addEventListener('click', () => {
+    gameState.playerTurn = gameState.playerTurn === 1 ? 2 : 1;
+    inputs.target.value = '';
+    inputs.word.value = '';
+    inputs.answer.value = '';
+    displayElements.wordImage.style.display = 'none';
+    showScreen('inputTarget');
+});
+
+// DOMの読み込み完了後に初期化
+document.addEventListener('DOMContentLoaded', initializeGame);

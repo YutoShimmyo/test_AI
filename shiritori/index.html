@@ -7,24 +7,43 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="title-screen">
+    <div id="title-screen"><!-- タイトル -->
         <h1>しりとりゲーム</h1>
         <button id="start-button">ゲームスタート</button>
     </div>
+    <div id="input_target-screen"> <!-- お題の入力 -->
+        <h1>前回の入力から続くお題を入力してください！</h1>
+        <input type="text" id="input-word">
+        <button id="to_input_word-screen">決定</button>
+    </div>
+    <div id="input_word-screen"> <!-- お題を説明する文字の入力 -->
+        <h1 id="current-word">お題を説明する文字を入力してください！</h1>
+        <h2 id="current-word">お題 : シリトリ</h2>
+        <h2 id="current-word">---漢字のみで単語を表してください---</h2>  <!-- お題を説明する文字の制限 -->
+        <input type="text" id="input-word">
+        <button id="to_wait-screen">決定</button>
+    </div>
+    <div id="wait-screen"> <!-- お題の入力 -->
+        <h1>画像を生成しています。プレイヤーを交代してください。</h1>
+        <button id="to_read_target-screen">交代しました</button>
+    </div>
+    <div id="read_target-screen"> <!-- お題の入力 -->
+        <h1>画像が生成されました。この画像は何を表しているでしょうか？</h1>
+        <div id="image-container" style="margin: 20px 0;">
+            <img id="word-image" src="" alt="単語の絵" style="max-width: 300px; max-height: 300px; display: none;">
+        </div>
+        <input type="text" id="input-word">
+        <button id="to_result-screen">決定</button>
+    </div>
 
-    <div id="game-screen" style="display: none;">
-        <h2 id="current-word">最初の単語: しりとり</h2>
-        <p>残り時間: <span id="timer">10</span>秒</p>
-        <input type="text" id="input-word" placeholder="次の単語を入力">
-        <button id="submit-button">決定</button>
-        <div id="result"></div>
-        <div id="history">
-            <h3>履歴:</h3>
-            <ul id="word-history"></ul>
+    <div id="result-screen"> <!-- お題の入力 -->
+        <h1>正解です。答えはコンピュータでした！</h1>
+        <div id="image-container" style="margin: 20px 0;">
+            <img id="word-image" src="" alt="単語の絵" style="max-width: 300px; max-height: 300px; display: none;">
         </div>
-        <div id="correct-answer" style="display: none;">
-            <p>正解は: <span id="answer-word"></span></p>
-        </div>
+        <h2>お題 : コンピュータ</h2>
+        <h2>入力した文字 : 計算機電気情報処理</h2>
+        <button id="start-button">次の問題</button>
     </div>
 
     <script src="script.js"></script>
