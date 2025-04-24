@@ -170,16 +170,16 @@ async function gene(prompt){
         return;
       }
       try {
-        const response = await fetch('/generate-image', {
+        const response = await fetch('/get_image', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ prompt })
+          body: JSON.stringify({ word: prompt })
         });
         const result = await response.json();
         if (response.ok && result.image) {
-          const img = document.getElementById('result-image');
+          const img = document.getElementById('word-image');
           img.src = 'data:image/png;base64,' + result.image;
           img.style.display = 'block';
         } else {
