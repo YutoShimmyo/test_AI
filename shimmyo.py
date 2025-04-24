@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import base64
 import requests
 
 app = Flask(__name__)
+CORS(app)
 
 API_KEY = "sk-yQ3k3LvX193SwaWw4kQvvVwHPnxfJcbpxzj1NWxReDDSdy9B"
 # 入力テキストを元にプロンプトを生成
