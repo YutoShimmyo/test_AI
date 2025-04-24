@@ -1,8 +1,15 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 import requests
 import base64
 
 app = Flask(__name__)
+# 必要なら全ルートで CORS を許可
+CORS(app)
+
+@app.route('/')
+def index():
+    return render_template('shiritori/index.html')
 
 API_KEY = "sk-yQ3k3LvX193SwaWw4kQvvVwHPnxfJcbpxzj1NWxReDDSdy9B"
 

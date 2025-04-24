@@ -37,6 +37,8 @@ const displayElements = {
     wordImage: document.getElementById('word-image')
 };
 
+wordtest = "none";
+
 // DOM要素の存在確認
 function checkElements() {
     const missingElements = [];
@@ -86,7 +88,7 @@ function initializeGame() {
     buttons.start.addEventListener('click', () => {
         gameState.currentWord = 'しりとり';
         gameState.usedWords = [gameState.currentWord];
-        showScreen('inputTarget');
+        showScreen('inputWord');
     });
 }
 
@@ -114,6 +116,27 @@ buttons.submitTarget.addEventListener('click', () => {
     showScreen('inputWord');
 });
 
+
+function getImage(description){
+    $.ajax({
+        url: "./getImage.py",
+        type: "post",
+        data: {description: description},
+        success: function(data){
+            console.log(data);
+            wordtest = data;
+            // 例: 画像を表示する処理や次の画面に遷移
+            // displayImage(data); または showScreen('nextScreen');
+        },
+        error: function(data){
+            console.log("failed");
+            alert('画像の取得に失敗しました');
+            showScreen('previousScreen');
+        }
+    });
+}
+
+
 // 説明文字入力処理
 buttons.submitWord.addEventListener('click', () => {
     const description = inputs.word.value.trim();
@@ -128,14 +151,46 @@ buttons.submitWord.addEventListener('click', () => {
     
     gameState.description = description;
     showScreen('wait');
+    gene("車")
+    //wordtest = getImage("aaa");
     //generateImage(description);
 });
+
 
 // 画像生成処理
 // 画像生成APIの設定
 const apiConfig = {
     imageGeneratorUrl: 'http://localhost:5000/get_image'
 };
+
+async function gene(prompt){
+    if (!prompt) {
+        alert('プロンプトを入力してください。');
+        promptInput.focus();
+        return;
+      }
+      try {
+        const response = await fetch('/generate-image', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ prompt })
+        });
+        const result = await response.json();
+        if (response.ok && result.image) {
+          const img = document.getElementById('result-image');
+          img.src = 'data:image/png;base64,' + result.image;
+          img.style.display = 'block';
+        } else {
+          alert('エラーが発生しました: ' + (result.error || response.statusText));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('通信エラーが発生しました。コンソールを確認してください。');
+      }
+
+}
 
 async function generateImage(description) {
     try {
@@ -174,6 +229,7 @@ buttons.next.addEventListener('click', () => {
     console.log('Answer button clicked');
     const answer = inputs.answer.value.trim();
     console.log('Answer:', answer);
+    console.log('Current word:', wordtest);
     if (answer === '') return;
     
     // 正解判定（簡易実装）
