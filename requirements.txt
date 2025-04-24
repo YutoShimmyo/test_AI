@@ -8,3 +8,4 @@ matplotlib
 datasets
 tqdm
 pandas
+ipykernel
