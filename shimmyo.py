@@ -24,7 +24,8 @@ def generate_image_prompt(input_text: str) -> str:
     else:
         script_type = "文字"
 
-    return f"{script_type}で「{input_text}」と入力されました。その「{input_text}」を描いた画像を生成してください。"
+    return f'Input was in {script_type}: "{input_text}". Generating an image that represents "{input_text}".'
+
 
 @app.route('/get_image', methods=['POST'])
 def get_image():
