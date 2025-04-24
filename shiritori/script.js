@@ -128,7 +128,7 @@ buttons.submitWord.addEventListener('click', () => {
     
     gameState.description = description;
     showScreen('wait');
-    //generateImage(description);
+    generateImage(description);
 });
 
 // 画像生成処理
@@ -142,7 +142,7 @@ async function generateImage(description) {
         if (!apiConfig.imageGeneratorUrl) {
             throw new Error('画像生成APIのURLが設定されていません');
         }
-        
+
         const response = await fetch(apiConfig.imageGeneratorUrl, {
             method: 'POST',
             headers: {
@@ -150,13 +150,16 @@ async function generateImage(description) {
             },
             body: JSON.stringify({ word: description })
         });
-        
+
         if (!response.ok) throw new Error('画像生成に失敗しました');
-        
-        const blob = await response.blob();
-        const imageUrl = URL.createObjectURL(blob);
-        displayElements.wordImage.src = imageUrl;
-        displayElements.wordImage.style.display = 'block';
+
+        const result = await response.json();
+        if (result.image) {
+            displayElements.wordImage.src = `data:image/png;base64,${result.image}`;
+            displayElements.wordImage.style.display = 'block';
+        } else {
+            throw new Error('画像データが返されませんでした');
+        }
     } catch (error) {
         console.error('Error:', error);
         alert('画像生成中にエラーが発生しました: ' + error.message);
