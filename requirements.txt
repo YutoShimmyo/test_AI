@@ -10,3 +10,4 @@ tqdm
 pandas
 requests pillow
 flask requests
+ipykernel
