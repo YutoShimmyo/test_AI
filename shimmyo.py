@@ -8,7 +8,7 @@ CORS(app)
 
 @app.route('/')
 def index():
-    return render_template('shiritori/index.html')
+    return render_template('index.html')
 
 API_KEY = "sk-yQ3k3LvX193SwaWw4kQvvVwHPnxfJcbpxzj1NWxReDDSdy9B"
 # 入力テキストを元にプロンプトを生成
