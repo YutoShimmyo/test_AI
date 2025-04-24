@@ -14,18 +14,18 @@
     <div id="input_target-screen"> <!-- お題の入力 -->
         <h1>前回の入力から続くお題を入力してください！</h1>
         <input type="text" id="input-word">
-        <button id="start-button">決定</button>
+        <button id="to_input_word-screen">決定</button>
     </div>
     <div id="input_word-screen"> <!-- お題を説明する文字の入力 -->
         <h1 id="current-word">お題を説明する文字を入力してください！</h1>
         <h2 id="current-word">お題 : シリトリ</h2>
         <h2 id="current-word">---漢字のみで単語を表してください---</h2>  <!-- お題を説明する文字の制限 -->
         <input type="text" id="input-word">
-        <button id="start-button">決定</button>
+        <button id="to_wait-screen">決定</button>
     </div>
     <div id="wait-screen"> <!-- お題の入力 -->
         <h1>画像を生成しています。プレイヤーを交代してください。</h1>
-        <button id="start-button">交代しました</button>
+        <button id="to_read_target-screen">交代しました</button>
     </div>
     <div id="read_target-screen"> <!-- お題の入力 -->
         <h1>画像が生成されました。この画像は何を表しているでしょうか？</h1>
@@ -33,7 +33,7 @@
             <img id="word-image" src="" alt="単語の絵" style="max-width: 300px; max-height: 300px; display: none;">
         </div>
         <input type="text" id="input-word">
-        <button id="start-button">決定</button>
+        <button id="to_result-screen">決定</button>
     </div>
 
     <div id="result-screen"> <!-- お題の入力 -->
