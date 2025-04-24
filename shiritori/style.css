@@ -1,0 +1,119 @@
+body {
+    font-family: sans-serif;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#title-screen, #game-screen {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 0;
+    box-shadow: none;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+h1 {
+    color: #343a40;
+    font-size: 3rem;
+    margin-bottom: 2rem;
+}
+
+h2 {
+    color: #495057;
+    margin-bottom: 30px;
+    font-size: 2.5rem;
+}
+
+p {
+    color: #6c757d;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 20px 40px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 2rem;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+input[type="text"] {
+    padding: 20px;
+    border: 2px solid #ced4da;
+    border-radius: 10px;
+    font-size: 2rem;
+    margin-right: 20px;
+    width: 60%;
+    box-sizing: border-box;
+}
+
+#result {
+    margin-top: 30px;
+    font-size: 3rem;
+    height: 60px;
+}
+
+.correct {
+    color: green;
+}
+
+.incorrect {
+    color: red;
+}
+
+#history {
+    margin-top: 40px;
+    text-align: left;
+    max-height: 30vh;
+    overflow-y: auto;
+    border: 2px solid #eee;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #f8f9fa;
+    width: 80%;
+}
+
+#history h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #495057;
+    font-size: 1.8rem;
+}
+
+#word-history {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 1.5rem;
+    color: #6c757d;
+}
+
+#word-history li {
+    margin-bottom: 3px;
+}
+
+#correct-answer {
+    margin-top: 15px;
+    color: #dc3545; /* 不正解時の答え表示色 */
+}
