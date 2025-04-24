@@ -1,0 +1,1 @@
+start shiritori/index.html
