@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>しりとりゲーム</title>
-    <link rel="stylesheet" href="../shiritori/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div id="title-screen"><!-- タイトル -->
@@ -45,7 +45,7 @@
         <h2>入力した文字 : 計算機電気情報処理</h2>
         <button id="to_init">次の問題</button>
     </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <script src="../shiritori/script.js"></script>
+     <!-- <script src="https://code.jquery.com/jquery-3.5.1.js"></script>-->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
