@@ -143,11 +143,11 @@ buttons.submitWord.addEventListener('click', () => {
     if (description === '') return;
     
     // 漢字のみチェック
-    const kanjiRegex = /^[\u4E00-\u9FFF]+$/;
+    /*const kanjiRegex = /^[\u4E00-\u9FFF]+$/;
     if (!kanjiRegex.test(description)) {
         alert('漢字のみで入力してください');
         return;
-    }
+    }*/
     
     gameState.description = description;
     showScreen('wait');
