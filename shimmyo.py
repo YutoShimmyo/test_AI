@@ -11,7 +11,7 @@ CORS(app)
 def index():
     return render_template('index.html')
 
-API_KEY = "sk-yQ3k3LvX193SwaWw4kQvvVwHPnxfJcbpxzj1NWxReDDSdy9B"
+API_KEY = "sk-Ar3bzqvbtM35fEJODgIGWJjHqXaN39y9uc5Q51VRoRIexIzO"
 # 入力テキストを元にプロンプトを生成
 def generate_image_prompt(input_text: str) -> str:
     if all('ぁ' <= ch <= 'ん' for ch in input_text):
