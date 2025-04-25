@@ -41,7 +41,7 @@ def get_image():
     prompt = "car"
 
     response = requests.post(
-        "https://api.stability.ai/v2beta/stable-image/generate/ultra",
+        "https://api.stability.ai/v2beta/stable-image/generate/sdxl-1.0",
         headers={
             "authorization": f"Bearer {API_KEY}",
             "accept": "image/*"
