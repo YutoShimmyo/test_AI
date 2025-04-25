@@ -38,7 +38,7 @@ def get_image():
         return jsonify({"error": "No word provided"}), 400
 
     prompt = generate_image_prompt(word)
-    prompt = "car"
+    #prompt = "car"
 
     response = requests.post(
         "https://api.stability.ai/v2beta/stable-image/generate/sdxl-1.0",
