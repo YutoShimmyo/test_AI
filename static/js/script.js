@@ -117,7 +117,7 @@ buttons.submitTarget.addEventListener('click', () => {
 });
 
 
-function getImage(description){
+/*function getImage(description){
     $.ajax({
         url: "./getImage.py",
         type: "post",
@@ -134,7 +134,7 @@ function getImage(description){
             showScreen('previousScreen');
         }
     });
-}
+}*/
 
 
 // 説明文字入力処理
@@ -154,9 +154,9 @@ buttons.submitWord.addEventListener('click', () => {
     buttons.ready.disabled = true;
     buttons.ready.style.backgroundColor = '#ccc';
     buttons.ready.style.cursor = 'not-allowed';
-    gene("車")
+    //gene("車")
     //wordtest = getImage("aaa");
-    //generateImage(description);
+    generateImage(description);
 });
 
 async function generateImage(description) {
