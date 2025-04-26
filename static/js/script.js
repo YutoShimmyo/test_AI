@@ -18,7 +18,8 @@ const screens = {
     inputWord: document.getElementById('input_word-screen'),
     wait: document.getElementById('wait-screen'),
     readTarget: document.getElementById('read_target-screen'),
-    result: document.getElementById('result-screen')
+    result: document.getElementById('result-screen'),
+    mandara: document.getElementById('mandara-screen')
 
 };
 
@@ -31,7 +32,6 @@ const buttons = {
     ready: document.getElementById('to_read_target-screen'),
     next: document.getElementById('to_result-screen'),
     nextQuestion: document.getElementById('to_init')
-
 };
 /*
 const inputs = {
@@ -46,7 +46,8 @@ const displayElements = {
     currentWord: document.getElementById('input_word-screen').querySelector('#current-word'),
     wordImage: document.getElementById('word-image')*/
     analysisInfo: document.getElementById('analysis-info'), // HTMLに <div id="analysis-info"></div> を追加
-    loading: document.getElementById('loading')
+    loading: document.getElementById('loading'),
+    mandaraImage: document.getElementById('mandara-image')
 };
 
 wordtest = "none";
@@ -170,8 +171,10 @@ function initializeGame() {
                     // ★ 準備ができたらカメラ画面（ゲーム画面）に遷移
                     //    少し待ってから遷移すると、ユーザーが結果を確認できる
                     setTimeout(() => {
-                        showScreen('camera'); // 口パクゲーム画面へ
-                        startCamera();      // カメラと顔検出を開始
+                        showScreen('mandara');
+                        //showScreen('camera'); // 口パクゲーム画面へ
+                        //startCamera();      // カメラと顔検出を開始
+
                         // ゲームロジック側で gameState.gameImagePaths を参照してターゲットを作成する
                     }, 1500); // 1.5秒待つ (調整可能)
 
@@ -364,7 +367,8 @@ function setupImageUpload() {
 
     // 次へボタンの処理
     buttons.toCamera.addEventListener('click', () => {
-        showScreen('camera');
+        //showScreen('camera');
+        showScreen('mandara')
         startCamera();
     });
 }
