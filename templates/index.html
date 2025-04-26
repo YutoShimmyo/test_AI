@@ -5,23 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>パクパク曼荼羅</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <!-- TensorFlow.jsとface-landmarks-detection用のスクリプト（バージョン指定） -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@1.0.2"></script>
+    <!-- OpenCV.js for basic image processing -->
+    <script src="https://docs.opencv.org/4.5.5/opencv.js"></script>
     <script>
-        // TensorFlow.js初期化状態確認
+        // OpenCV.js読み込み確認
         window.addEventListener('DOMContentLoaded', function() {
-            console.log('TensorFlow.js loaded:', typeof tf !== 'undefined');
-            console.log('face-landmarks-detection loaded:', typeof faceLandmarksDetection !== 'undefined');
+            function onOpenCvReady() {
+                console.log('OpenCV.js is ready');
+                document.getElementById('status').innerHTML = 'OpenCV.js is ready';
+            }
             
-            if (typeof tf !== 'undefined') {
-                console.log('TensorFlow.js version:', tf.version);
-                // バックエンド初期化
-                tf.setBackend('webgl').then(() => {
-                    console.log('TensorFlow.js backend initialized:', tf.getBackend());
-                }).catch(err => {
-                    console.error('Failed to set backend:', err);
-                });
+            if (typeof cv !== 'undefined') {
+                onOpenCvReady();
+            } else {
+                // OpenCV.jsの読み込みを待機
+                window.addEventListener('opencv-loaded', onOpenCvReady, { once: true });
             }
         });
     </script>
@@ -53,9 +51,14 @@
     </div>
     <div id="camera-screen"><!-- カメラ画像を表示 -->
         <h1>カメラを起動しています...</h1>
+        <div id="status" style="color: red; font-weight: bold;">Loading OpenCV.js...</div>
         <div class="camera-container">
-            <video id="video" autoplay style="display:none;"></video>
+            <video id="video" autoplay playsinline style="display:none;"></video>
             <canvas id="canvas" style="display:block; width:100%; max-width:640px; margin:10px auto; border:1px solid #999;"></canvas>
+            <div id="game-instructions" style="margin-top: 10px; text-align: center;">
+                <p>口を開いて（オレンジ色）から閉じる（緑色）とターゲットをキャッチできます</p>
+                <p>スコア: <span id="score-display">0</span></p>
+            </div>
         </div>
     </div>
     <div id="input_target-screen"> <!-- お題の入力 -->
