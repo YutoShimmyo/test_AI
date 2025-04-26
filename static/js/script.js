@@ -1,10 +1,7 @@
 // ゲームの状態管理
 const gameState = {
     currentScreen: 'title',
-    currentWord: '',
-    description: '',
-    usedWords: [],
-    playerTurn: 1
+    gameImagePaths: []
 };
 
 // DOM要素の取得
@@ -12,33 +9,27 @@ const screens = {
     title: document.getElementById('title-screen'),
     imageInput: document.getElementById('image-input-screen'),
     camera: document.getElementById('camera-screen'),
-    inputTarget: document.getElementById('input_target-screen'),
-    inputWord: document.getElementById('input_word-screen'),
-    wait: document.getElementById('wait-screen'),
-    readTarget: document.getElementById('read_target-screen'),
-    result: document.getElementById('result-screen')
 };
 
 const buttons = {
     start: document.getElementById('start-button'),
     toCamera: document.getElementById('to-camera-screen'),
     resetImages: document.getElementById('reset-images'),
-    submitTarget: document.getElementById('to_input_word-screen'),
-    submitWord: document.getElementById('to_wait-screen'),
-    ready: document.getElementById('to_read_target-screen'),
-    next: document.getElementById('to_result-screen'),
-    nextQuestion: document.getElementById('to_init')
 };
-
+/*
 const inputs = {
     target: document.getElementById('input_target-screen').querySelector('#input-word'),
     word: document.getElementById('input_word-screen').querySelector('#input-word'),
     answer: document.getElementById('read_target-screen').querySelector('#input-word')
 };
+*/
 
 const displayElements = {
+    /*
     currentWord: document.getElementById('input_word-screen').querySelector('#current-word'),
-    wordImage: document.getElementById('word-image')
+    wordImage: document.getElementById('word-image')*/
+    analysisInfo: document.getElementById('analysis-info'), // HTMLに <div id="analysis-info"></div> を追加
+    loading: document.getElementById('loading')
 };
 
 wordtest = "none";
@@ -71,6 +62,27 @@ function showScreen(screenName) {
     } else {
         console.error(`Screen not found: ${screenName}`);
     }
+}
+
+function displayAnalysisInfo(detectedLabels, livesList) {
+    if (displayElements.analysisInfo) {
+        let htmlContent = '<h3><center>画像分析結果<center></h3>'; // 中央揃えを追加 (任意)
+        htmlContent += `<p><strong>推定された食べ物/物体:</strong> ${detectedLabels.join(', ')}</p>`;
+        htmlContent += `<p><strong>含まれる「命」:</strong> ${livesList.join(', ')}</p>`;
+        displayElements.analysisInfo.innerHTML = htmlContent;
+        displayElements.analysisInfo.style.display = 'block'; // 表示を確実にする
+    } else {
+        console.warn('結果表示用の要素 #analysis-info が見つかりません。');
+        // フォールバック
+        alert(`推定: ${detectedLabels.join(', ')}\n命: ${livesList.join(', ')}`);
+    }
+}
+
+// --- ★ ゲーム準備用の関数（gameStateに保存する例） ---
+function prepareGameWithImagePaths(imagePaths) {
+    console.log("ゲームの準備中 (使用する画像パス):", imagePaths);
+    gameState.gameImagePaths = imagePaths; // グローバルな状態に保存
+    // 必要であれば、ここで画像のプリロードなどを行う
 }
 
 // 初期化処理
