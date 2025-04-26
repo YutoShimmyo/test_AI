@@ -92,89 +92,102 @@ function initializeGame() {
         alert('ゲームの初期化に失敗しました。コンソールを確認してください');
         return;
     }
-    
-    // 初期表示設定
     Object.values(screens).forEach(screen => {
         if (screen) screen.style.display = 'none';
     });
-    
     showScreen('title');
-    
-    // ゲーム開始処理
+
     buttons.start.addEventListener('click', () => {
-        gameState.currentWord = 'computer';
-        gameState.usedWords = [gameState.currentWord];
+        // gameState.currentWord = 'computer'; // しりとり関連削除
+        // gameState.usedWords = [gameState.currentWord];
         showScreen('imageInput');
         setupImageUpload();
+        // 解析結果表示エリアを初期化時に隠す（任意）
+        if(displayElements.analysisInfo) displayElements.analysisInfo.style.display = 'none';
     });
-}
 
-// お題入力処理
-buttons.submitTarget.addEventListener('click', () => {
-    const targetWord = inputs.target.value.trim();
-    if (targetWord === '') return;
-    
-    // しりとりのルールチェック
-    const lastChar = gameState.currentWord.slice(-1);
-    const firstChar = targetWord.charAt(0);
-    
-    if (lastChar !== firstChar) {
-        alert(`「${lastChar}」から始まる単語を入力してください`);
-        return;
-    }
-    
-    if (gameState.usedWords.includes(targetWord)) {
-        alert('その単語は既に使われています');
-        return;
-    }
-    
-    gameState.currentWord = targetWord;
-    gameState.usedWords.push(targetWord);
-    showScreen('inputWord');
-});
-
-
-/*function getImage(description){
-    $.ajax({
-        url: "./getImage.py",
-        type: "post",
-        data: {description: description},
-        success: function(data){
-            console.log(data);
-            wordtest = data;
-            // 例: 画像を表示する処理や次の画面に遷移
-            // displayImage(data); または showScreen('nextScreen');
-        },
-        error: function(data){
-            console.log("failed");
-            alert('画像の取得に失敗しました');
-            showScreen('previousScreen');
+    // --- ★★★ toCamera ボタンのイベントリスナーを修正 ★★★ ---
+    buttons.toCamera.addEventListener('click', async () => { // async を確認
+        if (uploadedImages.length === 0) {
+            alert('分析する画像を選択してください。');
+            return;
         }
-    });
-}*/
 
+        const imageFile = uploadedImages[0]; // 最初の画像を分析対象とする
+        const formData = new FormData();
+        formData.append('file', imageFile);
 
-// 説明文字入力処理
-buttons.submitWord.addEventListener('click', () => {
-    const description = inputs.word.value.trim();
-    if (description === '') return;
-    
-    // 漢字のみチェック
-    /*const kanjiRegex = /^[\u4E00-\u9FFF]+$/;
-    if (!kanjiRegex.test(description)) {
-        alert('漢字のみで入力してください');
-        return;
-    }*/
-    
-    gameState.description = description;
-    showScreen('wait');
-    buttons.ready.disabled = true;
-    buttons.ready.style.backgroundColor = '#ccc';
-    buttons.ready.style.cursor = 'not-allowed';
-    //gene("車")
-    //wordtest = getImage("aaa");
-    generateImage(description);
-});
+        // ローディング表示
+        if(displayElements.loading) displayElements.loading.style.display = 'block';
+        if(displayElements.analysisInfo) displayElements.analysisInfo.innerHTML = ''; // 前回の結果をクリア
+
+        try {
+            console.log('Sending image to /upload...');
+            const response = await fetch('/upload', { // shimmyo.py の /upload を呼び出す
+                method: 'POST',
+                body: formData
+            });
+
+            if(displayElements.loading) displayElements.loading.style.display = 'none'; // ローディング非表示
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Received data:', data);
+
+                // ★★★ レスポンスから必要なリストを取得 ★★★
+                if (data.image_paths && data.lives && data.detected_labels) {
+                    const imagePaths = data.image_paths;
+                    const livesList = data.lives;
+                    const detectedLabels = data.detected_labels;
+
+                    console.log('Received Image Paths:', imagePaths);
+                    console.log('Received Lives:', livesList);
+                    console.log('Received Detected Labels:', detectedLabels);
+
+                    // ★ 解析結果を表示
+                    displayAnalysisInfo(detectedLabels, livesList);
+
+                    // ★ ゲームの準備 (画像パスリストを gameState に保存)
+                    prepareGameWithImagePaths(imagePaths);
+
+                    // ★ 準備ができたらカメラ画面（ゲーム画面）に遷移
+                    //    少し待ってから遷移すると、ユーザーが結果を確認できる
+                    setTimeout(() => {
+                        showScreen('camera'); // 口パクゲーム画面へ
+                        startCamera();      // カメラと顔検出を開始
+                        // ゲームロジック側で gameState.gameImagePaths を参照してターゲットを作成する
+                    }, 1500); // 1.5秒待つ (調整可能)
+
+                } else if (data.error) {
+                    alert('画像分析エラー: ' + data.error);
+                    console.error('Analysis Error:', data.error);
+                    if(displayElements.analysisInfo) displayElements.analysisInfo.textContent = 'エラー: ' + data.error;
+                } else {
+                    alert('サーバーから予期しない応答がありました。');
+                    if(displayElements.analysisInfo) displayElements.analysisInfo.textContent = 'サーバーから予期しない応答がありました。';
+                }
+            } else {
+                // HTTPエラー処理
+                let errorMsg = `サーバーエラー: ${response.status} ${response.statusText}`;
+                 try {
+                     const errorData = await response.json();
+                     errorMsg += `\n${errorData.error || ''}`;
+                 } catch (e) {/* JSONパース失敗 */}
+                 alert(errorMsg);
+                 console.error('Server Error:', errorMsg);
+                 if(displayElements.analysisInfo) displayElements.analysisInfo.textContent = errorMsg;
+            }
+
+        } catch (error) {
+            // 通信エラーなど
+            if(displayElements.loading) displayElements.loading.style.display = 'none'; // ローディング非表示
+            console.error('Fetch Error:', error);
+            alert('サーバーとの通信に失敗しました。Flaskサーバーが起動しているか確認してください。');
+            if(displayElements.analysisInfo) displayElements.analysisInfo.textContent = '通信エラーが発生しました。';
+        }
+    }); // toCamera ボタンリスナーここまで
+
+} // initializeGame ここまで
 
 async function generateImage(description) {
     try {
