@@ -480,7 +480,7 @@ async function loadFaceDetector() {
         console.log('Initializing MediaPipe FaceMesh model...');
         const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
         const detectorConfig = {
-            runtime: 'tfjs',
+            runtime: 'mediapipe',
             refineLandmarks: true,
             maxFaces: 1
         };
