@@ -528,10 +528,10 @@ async function processVideoFrame() {
         try {
             // canvasにビデオフレームを描画
             canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-            
+            console.log('Video frame processed');
             // 顔のランドマークを検出
             const faces = await faceDetector.estimateFaces(videoElement, { flipHorizontal: false });
-            
+            console.log('Faces detected:', faces);
             if (faces && faces.length > 0) {
                 // 最初の顔を処理
                 const face = faces[0];
@@ -541,7 +541,7 @@ async function processVideoFrame() {
                 
                 // 口の中心座標と開き具合を検出
                 const mouthInfo = detectMouthCenter(keypoints);
-                
+                console.log('Mouth info:', mouthInfo);
                 if (mouthInfo) {
                     const [mouthCenterX, mouthCenterY, mouthOpenSize] = mouthInfo;
                     
