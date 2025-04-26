@@ -416,12 +416,35 @@ let scaleY = 1;
 // 顔検出器の読み込み
 async function loadFaceDetector() {
     try {
+        console.log('Loading face-landmarks-detection model...');
+        
+        // TensorFlow.jsのバージョンとステータスを確認
+        if (typeof tf !== 'undefined') {
+            console.log('TensorFlow.js version:', tf.version);
+            console.log('TensorFlow.js backend:', tf.getBackend());
+        } else {
+            console.error('TensorFlow.js is not loaded properly');
+            alert('TensorFlow.jsが正しく読み込まれていません。ページを更新してください。');
+            return;
+        }
+        
+        // face-landmarks-detectionが読み込まれているか確認
+        if (typeof faceLandmarksDetection === 'undefined') {
+            console.error('face-landmarks-detection is not loaded properly');
+            alert('face-landmarks-detectionが正しく読み込まれていません。ページを更新してください。');
+            return;
+        }
+        
+        console.log('Initializing MediaPipe FaceMesh model...');
         const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
         const detectorConfig = {
             runtime: 'tfjs',
             refineLandmarks: true,
             maxFaces: 1
         };
+        
+        // モデルの読み込み
+        console.log('Creating detector with config:', detectorConfig);
         faceDetector = await faceLandmarksDetection.createDetector(model, detectorConfig);
         isDetectorReady = true;
         console.log('Face detector loaded successfully');
@@ -521,18 +544,39 @@ function detectMouthCenter(landmarks) {
 
 // ゲーム関連の変数
 let gameStarted = false; // ゲームが開始されたかどうか
+let faceDetectionAttempts = 0; // 顔検出の試行回数
+const MAX_ATTEMPTS = 30; // 顔検出の最大試行回数
 
 // ビデオフレームを処理し、顔検出と口の中心座標の描画を行う
 async function processVideoFrame() {
-    if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA && canvasContext && isDetectorReady) {
+    if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA && canvasContext) {
         try {
             // canvasにビデオフレームを描画
             canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-            console.log('Video frame processed');
+            
+            // ステータス表示用のデータを追加
+            canvasContext.fillStyle = '#FFFFFF';
+            canvasContext.font = '14px Arial';
+            canvasContext.fillText(`顔検出ステータス: ${isDetectorReady ? '準備完了' : '準備中'}`, 10, 20);
+            canvasContext.fillText(`検出試行回数: ${faceDetectionAttempts}`, 10, 40);
+            
+            // 顔検出器が準備できていない場合
+            if (!isDetectorReady) {
+                canvasContext.fillStyle = '#FF0000';
+                canvasContext.font = '16px Arial';
+                canvasContext.fillText('顔検出器を読み込み中...', 10, 60);
+                return;
+            }
+            
             // 顔のランドマークを検出
+            console.log('Detecting faces...');
             const faces = await faceDetector.estimateFaces(videoElement, { flipHorizontal: false });
-            console.log('Faces detected:', faces);
+            console.log('Faces detected:', faces ? faces.length : 0);
+            faceDetectionAttempts++;
+            
+            // 顔が検出された場合
             if (faces && faces.length > 0) {
+                console.log('Face detected successfully!');
                 // 最初の顔を処理
                 const face = faces[0];
                 
@@ -542,6 +586,7 @@ async function processVideoFrame() {
                 // 口の中心座標と開き具合を検出
                 const mouthInfo = detectMouthCenter(keypoints);
                 console.log('Mouth info:', mouthInfo);
+                
                 if (mouthInfo) {
                     const [mouthCenterX, mouthCenterY, mouthOpenSize] = mouthInfo;
                     
@@ -552,6 +597,7 @@ async function processVideoFrame() {
                         // ゲームが開始されていなければ開始
                         if (!gameStarted) {
                             gameStarted = true;
+                            console.log('Game started!');
                             // ゲーム開始時の処理
                             // ターゲットの作成（datasets内の画像を利用）
                             if (typeof createTarget === 'function') {
@@ -562,7 +608,7 @@ async function processVideoFrame() {
                         }
                     }
                     
-                    // ゲーム描画の後に情報を表示
+                    // ゲーム描画を行う
                     if (typeof draw === 'function') {
                         draw(canvasContext);
                     }
@@ -570,12 +616,68 @@ async function processVideoFrame() {
                     // 口の中心座標をテキスト表示
                     canvasContext.fillStyle = '#00FF00';
                     canvasContext.font = '12px Arial';
-                    canvasContext.fillText(`口の中心: (${Math.round(mouthCenterX)}, ${Math.round(mouthCenterY)})`, 10, 30);
-                    canvasContext.fillText(`開き具合: ${Math.round(mouthOpenSize)}`, 10, 50);
+                    canvasContext.fillText(`口の中心: (${Math.round(mouthCenterX)}, ${Math.round(mouthCenterY)})`, 10, 80);
+                    canvasContext.fillText(`開き具合: ${Math.round(mouthOpenSize)}`, 10, 100);
+                }
+            } else {
+                // 顔が検出されない場合
+                if (faceDetectionAttempts % 10 === 0) { // 10回ごとにログ出力
+                    console.log(`顔が検出されていません (${faceDetectionAttempts}回目)`);
+                }
+                
+                canvasContext.fillStyle = '#FF6600';
+                canvasContext.font = '16px Arial';
+                canvasContext.fillText('顔が検出されていません', 10, 60);
+                
+                // 一定回数試行しても検出されない場合、代替モードに切り替え
+                if (faceDetectionAttempts > MAX_ATTEMPTS) {
+                    // ダミーの口の位置でゲームを続ける
+                    const centerX = canvasElement.width / 2;
+                    const centerY = canvasElement.height / 2;
+                    
+                    canvasContext.fillStyle = '#FFFF00';
+                    canvasContext.font = '16px Arial';
+                    canvasContext.fillText('代替モード：マウスで操作できます', 10, 120);
+                    
+                    // マウス位置取得のイベントリスナーを一度だけ追加
+                    if (!gameStarted) {
+                        canvasElement.addEventListener('mousemove', function(e) {
+                            const rect = canvasElement.getBoundingClientRect();
+                            const mouseX = e.clientX - rect.left;
+                            const mouseY = e.clientY - rect.top;
+                            if (typeof updateMouthPosition === 'function') {
+                                updateMouthPosition(mouseX, mouseY, 20);
+                            }
+                        });
+                        
+                        // ゲーム開始
+                        if (typeof updateMouthPosition === 'function') {
+                            updateMouthPosition(centerX, centerY, 20);
+                            gameStarted = true;
+                            
+                            // ターゲットの作成
+                            if (typeof createTarget === 'function') {
+                                createTarget(40, 40, 'datasets/cow.png');
+                                createTarget(40, 40, 'datasets/milk.png');
+                                createTarget(40, 40, 'datasets/pig.png');
+                            }
+                        }
+                    }
+                    
+                    // ゲーム描画
+                    if (typeof draw === 'function') {
+                        draw(canvasContext);
+                    }
                 }
             }
         } catch (error) {
             console.error('フレーム処理中のエラー:', error);
+            // エラーメッセージを画面に表示
+            if (canvasContext) {
+                canvasContext.fillStyle = '#FF0000';
+                canvasContext.font = '16px Arial';
+                canvasContext.fillText(`エラー: ${error.message}`, 10, 150);
+            }
         }
     }
 }
