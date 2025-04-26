@@ -51,13 +51,21 @@
     </div>
     <div id="camera-screen"><!-- カメラ画像を表示 -->
         <h1>カメラを起動しています...</h1>
-        <div id="status" style="color: red; font-weight: bold;">Loading OpenCV.js...</div>
+        <div id="status" style="color: red; font-weight: bold; margin-bottom: 10px;">カメラの読み込み中...</div>
         <div class="camera-container">
-            <video id="video" autoplay playsinline style="display:none;"></video>
-            <canvas id="canvas" style="display:block; width:100%; max-width:640px; margin:10px auto; border:1px solid #999;"></canvas>
+            <div style="position: relative; width: 100%; max-width: 640px; margin: 0 auto;">
+                <!-- ビデオは表示して問題を確認 -->
+                <video id="video" autoplay playsinline muted
+                       style="position: absolute; top: 0; left: 0; width: 100%; max-width:640px; z-index: 1;
+                              border: 1px dashed blue; display:block; opacity: 0.5;"></video>
+                <canvas id="canvas"
+                        style="position: relative; z-index: 2; width:100%; max-width:640px;
+                               margin:0 auto; border:1px solid #999;"></canvas>
+            </div>
             <div id="game-instructions" style="margin-top: 10px; text-align: center;">
                 <p>口を開いて（オレンジ色）から閉じる（緑色）とターゲットをキャッチできます</p>
                 <p>スコア: <span id="score-display">0</span></p>
+                <button id="enable-camera" style="display: none;">カメラを有効にする</button>
             </div>
         </div>
     </div>

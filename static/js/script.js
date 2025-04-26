@@ -510,11 +510,29 @@ function createInitialTargets() {
 function processVideoFrame() {
     if (!videoElement || !canvasElement || !canvasContext) return;
     
-    if (videoElement.readyState !== videoElement.HAVE_ENOUGH_DATA) return;
-    
     try {
+        // ビデオのステータスをチェック
+        if (videoElement.readyState !== videoElement.HAVE_ENOUGH_DATA) {
+            console.log('ビデオデータが不足しています:', videoElement.readyState);
+            return;
+        }
+        
         // Canvas要素にビデオフレームを描画
-        canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+        try {
+            canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+        } catch (drawError) {
+            console.error('drawImage失敗:', drawError);
+            const statusElem = document.getElementById('status');
+            if (statusElem) {
+                statusElem.innerHTML = `描画エラー: ${drawError.message}`;
+            }
+            return;
+        }
+        
+        // デバッグ情報をコンソールに出力
+        if (faceDetectionAttempts % 100 === 0) { // 100フレームごとに出力
+            console.log(`ビデオ処理中: ${canvasElement.width}x${canvasElement.height}, readyState=${videoElement.readyState}`);
+        }
         
         // 明るさに基づく簡易的な口検出
         detectMouthByBrightness();
@@ -617,6 +635,90 @@ document.addEventListener('DOMContentLoaded', () => {
             statusElem.style.color = '#00FF00';
         }
     });
+    
+    // カメラ有効化ボタンのイベント設定
+    const enableCameraButton = document.getElementById('enable-camera');
+    if (enableCameraButton) {
+        enableCameraButton.addEventListener('click', async () => {
+            try {
+                const statusElem = document.getElementById('status');
+                if (statusElem) {
+                    statusElem.innerHTML = 'カメラの有効化を試みています...';
+                    statusElem.style.color = '#FFFF00';
+                }
+                
+                // カメラの再起動を試みる
+                videoElement = document.getElementById('video');
+                if (!videoElement) {
+                    console.error('Video element not found');
+                    return;
+                }
+                
+                // 既存のストリームがあれば停止
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                }
+                
+                // カメラを起動
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    },
+                    audio: false
+                });
+                
+                // ストリームを設定して再生
+                videoElement.srcObject = cameraStream;
+                await videoElement.play();
+                
+                // ビデオを表示
+                videoElement.style.display = 'block';
+                videoElement.style.opacity = '0.5';
+                
+                if (statusElem) {
+                    statusElem.innerHTML = 'カメラを有効化しました！';
+                    statusElem.style.color = '#00FF00';
+                }
+                
+                // ボタンを非表示に
+                enableCameraButton.style.display = 'none';
+                
+                // ゲーム開始
+                if (!gameStarted) {
+                    enableMouseMode();
+                }
+            } catch (error) {
+                console.error('カメラの有効化に失敗:', error);
+                const statusElem = document.getElementById('status');
+                if (statusElem) {
+                    statusElem.innerHTML = `カメラの有効化に失敗: ${error.message}<br>マウスモードで操作してください`;
+                    statusElem.style.color = 'red';
+                }
+            }
+        });
+        
+        // ボタンを表示
+        enableCameraButton.style.display = 'block';
+    }
+    
+    // スタイル追加
+    const style = document.createElement('style');
+    style.textContent = `
+        .camera-container {
+            position: relative;
+        }
+        .camera-active {
+            animation: camera-pulse 2s infinite;
+        }
+        @keyframes camera-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0,255,0,0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0,255,0,0); }
+            100% { box-shadow: 0 0 0 0 rgba(0,255,0,0); }
+        }
+    `;
+    document.head.appendChild(style);
 });
 
 // グローバルに関数を公開
