@@ -40,7 +40,6 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
-    """画像を受け取り、分析して「命」に対応する画像パスリストを返す"""
     if 'file' not in request.files:
         return jsonify({"error": "ファイルがありません"}), 400
     file = request.files['file']
@@ -57,6 +56,9 @@ def upload_image():
             例: ["wheat", "beef", "tomato", "lettuce", "cow"]
             他の説明や前置きは不要です。JSON配列のみを出力してください。
             もし特定が難しい場合は、["unknown_life"] と出力してください。
+            加えて、画像に写っている主要な物体や料理名を英語で3つまでリストアップし、
+            それもJSONの 'detected_labels' キーの値として配列で含めてください。
+            例: {"lives": ["wheat", "beef"], "detected_labels": ["hamburger", "fast food", "meal"]}
             """
             print("--- Sending request to Gemini API ---")
             response = model.generate_content([prompt, img], stream=False)
@@ -71,60 +73,53 @@ def upload_image():
             response_text = response.text
             print(f"--- Gemini API Raw Response Text:\n{response_text}\n---")
 
-            life_list = []
-            # --- Geminiからの応答をパースして「命」リストを抽出 ---
-            # (省略... 現在のコードのまま)
+            life_list = ["unknown_life"] # デフォルト値
+            detected_labels = ["unknown food"] # デフォルト値
+
+            # --- Geminiからの応答をパース ---
             try:
                 cleaned_response = re.sub(r'^```json\s*|\s*```$', '', response_text.strip())
                 parsed_data = json.loads(cleaned_response)
-                if isinstance(parsed_data, list):
-                    life_list = [item.lower() for item in parsed_data if isinstance(item, str) and item.islower() and item.isalpha()]
-                else:
-                    print("Warning: Gemini response was valid JSON but not a list.")
+
+                # "lives" リストの抽出と検証
+                if isinstance(parsed_data.get("lives"), list):
+                    potential_lives = parsed_data["lives"]
+                    validated_lives = [item.lower() for item in potential_lives if isinstance(item, str) and item.islower() and item.isalpha()]
+                    if validated_lives: # 有効なものが一つでもあれば採用
+                        life_list = validated_lives
+
+                # "detected_labels" リストの抽出と検証
+                if isinstance(parsed_data.get("detected_labels"), list):
+                     potential_labels = parsed_data["detected_labels"]
+                     # こちらはアルファベット以外も含む可能性があるので isalpha() は使わない
+                     validated_labels = [item.lower() for item in potential_labels if isinstance(item, str)]
+                     if validated_labels:
+                          detected_labels = validated_labels
+
             except json.JSONDecodeError:
-                print("Warning: Failed to parse Gemini response as JSON. Trying regex extraction.")
-                match = re.search(r'\[\s*([\'"]?\w+[\'"]?\s*,\s*)*[\'"]?\w+[\'"]?\s*\]', cleaned_response)
-                if match:
-                    try:
-                        potential_list = eval(match.group(0))
-                        if isinstance(potential_list, list):
-                             life_list = [item.lower() for item in potential_list if isinstance(item, str) and item.isalpha()]
-                    except Exception as eval_err:
-                         print(f"Error evaluating extracted list: {eval_err}")
-                if not life_list:
-                     print("Warning: Could not extract list using regex.")
-                     life_list = ["unknown_life"]
-            if not life_list:
-                 life_list = ["unknown_life"]
-            # --- パース処理ここまで ---
+                print("Warning: Failed to parse Gemini response as JSON.")
+                # JSONパース失敗時のフォールバックは省略（必要なら追加）
 
             print(f"--- Detected Lives: {life_list} ---")
+            print(f"--- Detected Labels: {detected_labels} ---")
 
-            # --- ★ 「命」リストから画像パスリストを作成 ★ ---
+            # --- 「命」リストから画像パスリストを作成 ---
             image_path_list = []
             for life in life_list:
-                # datasetsフォルダ内の画像パスを組み立てる (例: datasets/cow.png)
-                potential_path = os.path.join(DATASETS_FOLDER, f"{life}.png")
-                # Windowsパスの '\' を '/' に置換（Webパスのため）
-                potential_path = potential_path.replace("\\", "/")
-
-                # (推奨) 実際にファイルが存在するか確認
-                # os.path.exists は shimmyo.py から見たパスでチェックします
+                potential_path = os.path.join(DATASETS_FOLDER, f"{life}.png").replace("\\", "/")
                 if os.path.exists(potential_path):
                     image_path_list.append(potential_path)
-                    print(f"Found image for '{life}': {potential_path}")
                 else:
-                    # 存在しない場合はデフォルト画像パスを追加
                     image_path_list.append(DEFAULT_IMAGE_PATH)
-                    print(f"Image for '{life}' not found at '{potential_path}', using default.")
-
-            # 重複を除去したい場合は Set を使う (任意)
-            # image_path_list = sorted(list(set(image_path_list)))
 
             print(f"--- Returning Image Paths: {image_path_list} ---")
 
-            # ★ JSONのキーを "image_paths" にして画像パスのリストを返す
-            return jsonify({"image_paths": image_path_list})
+            # ★ JSONに image_paths, lives, detected_labels を含めて返す
+            return jsonify({
+                "image_paths": image_path_list,
+                "lives": life_list,
+                "detected_labels": detected_labels
+            })
 
         except Exception as e:
             print(f"Error processing image with Gemini: {e}")
