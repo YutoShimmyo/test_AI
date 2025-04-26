@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>しりとりゲーム</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- TensorFlow.jsとface-landmarks-detection用のスクリプト -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
 </head>
 <body>
     <div id="title-screen"><!-- タイトル -->

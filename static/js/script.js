@@ -406,6 +406,30 @@ let videoElement;
 let canvasElement;
 let canvasContext;
 let cameraStream;
+let faceDetector; // 顔検出器
+let isDetectorReady = false; // 検出器の準備状態
+const MOUTH_MIN_SIZE = 10; // 口の開き具合の最小閾値（必要に応じて調整）
+// canvasとvideoのスケール比率
+let scaleX = 1;
+let scaleY = 1;
+
+// 顔検出器の読み込み
+async function loadFaceDetector() {
+    try {
+        const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
+        const detectorConfig = {
+            runtime: 'tfjs',
+            refineLandmarks: true,
+            maxFaces: 1
+        };
+        faceDetector = await faceLandmarksDetection.createDetector(model, detectorConfig);
+        isDetectorReady = true;
+        console.log('Face detector loaded successfully');
+    } catch (error) {
+        console.error('Failed to load face detector:', error);
+        alert('顔検出器の読み込みに失敗しました: ' + error.message);
+    }
+}
 
 // カメラ起動関数
 async function startCamera() {
@@ -422,13 +446,17 @@ async function startCamera() {
     canvasContext = canvasElement.getContext('2d');
     
     try {
+        // 顔検出器を読み込む
+        await loadFaceDetector();
+        
         // カメラストリームの取得
         cameraStream = await navigator.mediaDevices.getUserMedia({
             video: {
-                facingMode: 'environment',
+                facingMode: 'user', // フロントカメラを使用
                 width: { ideal: 640 },
                 height: { ideal: 480 }
-            }
+            },
+            audio: false // 音声は使用しない
         });
         
         // ビデオ要素にストリームを設定
@@ -446,17 +474,15 @@ async function startCamera() {
             // 見出しテキストを変更
             const heading = document.querySelector('#camera-screen h1');
             if (heading) {
-                heading.textContent = 'カメラ画像';
+                heading.textContent = '口の中心検出';
             }
             
-            // 定期的にフレームを描画
-            setInterval(drawVideoFrame, 100);
+            // videoとcanvasの画像サイズに差異があるため記憶する
+            scaleX = canvasElement.width / videoElement.videoWidth;
+            scaleY = canvasElement.height / videoElement.videoHeight;
             
-            // 5秒後に次の画面へ自動遷移（オプション）
-           /* setTimeout(() => {
-                showScreen('inputWord');
-                stopCamera();
-            }, 5000);*/
+            // 定期的にフレームを描画
+            setInterval(processVideoFrame, 100);
         };
         
     } catch (error) {
@@ -466,10 +492,73 @@ async function startCamera() {
     }
 }
 
-// ビデオフレームをCanvasに描画
-function drawVideoFrame() {
-    if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA && canvasContext) {
-        canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+// 顔のランドマークから口の中心座標と開き具合を検出する関数
+function detectMouthCenter(landmarks) {
+    try {
+        // 口の内側の上唇と下唇のポイントを取得（MediaPipe Facemeshのランドマークインデックス）
+        // 内側下唇の真ん中（索引 78 = MediaPipeの口内側下唇の中央部）
+        const innerLowerLip = landmarks[78];
+        // 内側上唇の真ん中（索引 13 = MediaPipeの口内側上唇の中央部）
+        const innerUpperLip = landmarks[13];
+        
+        // 口の開き具合：内側上唇と内側下唇のY座標の差分
+        const openMouthSize = innerLowerLip[1] - innerUpperLip[1];
+        // 口の中心位置のY座標
+        const y = innerLowerLip[1] - openMouthSize / 2;
+        
+        // 口の中心のX座標、Y座標、開き具合を返す
+        // 開き具合が閾値より小さい場合は閾値を返す
+        return [
+            innerLowerLip[0], // X座標
+            y, // Y座標
+            openMouthSize < MOUTH_MIN_SIZE ? MOUTH_MIN_SIZE : openMouthSize // 開き具合
+        ];
+    } catch (error) {
+        console.error('口の中心検出に失敗:', error);
+        return null;
+    }
+}
+
+// ビデオフレームを処理し、顔検出と口の中心座標の描画を行う
+async function processVideoFrame() {
+    if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA && canvasContext && isDetectorReady) {
+        try {
+            // canvasにビデオフレームを描画
+            canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+            
+            // 顔のランドマークを検出
+            const faces = await faceDetector.estimateFaces(videoElement, { flipHorizontal: false });
+            
+            if (faces && faces.length > 0) {
+                // 最初の顔を処理
+                const face = faces[0];
+                
+                // キーポイントはカメラ画像のものであるためvideoとcanvasのスケール差を合わせる
+                const keypoints = face.keypoints.map(keypoint => [keypoint.x * scaleX, keypoint.y * scaleY]);
+                
+                // 口の中心座標と開き具合を検出
+                const mouthInfo = detectMouthCenter(keypoints);
+                
+                if (mouthInfo) {
+                    const [mouthCenterX, mouthCenterY, mouthOpenSize] = mouthInfo;
+                    
+                    // 口の中心に丸を描画（開き具合に応じて丸のサイズを変更）
+                    canvasContext.strokeStyle = '#FF0000';
+                    canvasContext.lineWidth = 2;
+                    canvasContext.beginPath();
+                    canvasContext.arc(mouthCenterX, mouthCenterY, mouthOpenSize, 0, 2 * Math.PI);
+                    canvasContext.stroke();
+                    
+                    // 口の中心座標をテキスト表示
+                    canvasContext.fillStyle = '#00FF00';
+                    canvasContext.font = '12px Arial';
+                    canvasContext.fillText(`口の中心: (${Math.round(mouthCenterX)}, ${Math.round(mouthCenterY)})`, 10, 30);
+                    canvasContext.fillText(`開き具合: ${Math.round(mouthOpenSize)}`, 10, 50);
+                }
+            }
+        } catch (error) {
+            console.error('フレーム処理中のエラー:', error);
+        }
     }
 }
 
