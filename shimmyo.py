@@ -30,7 +30,7 @@ except Exception as e:
     print(f"Gemini API の設定または初期化に失敗しました: {e}")
     model = None # エラーが発生したらモデルをNoneにする
 
-DATASETS_FOLDER = "datasets"
+DATASETS_FOLDER = "static/datasets"
 DEFAULT_IMAGE_PATH = os.path.join(DATASETS_FOLDER, "unknown.png").replace("\\", "/") # デフォルト画像パス (存在確認もすると尚良い)
 
 @app.route('/')
