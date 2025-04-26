@@ -11,9 +11,22 @@
         <h1>しりとりゲーム</h1>
         <button id="start-button">ゲームスタート</button>
     </div>
-    <div id="image-input-screen"><!-- タイトル -->
-        <h1>今日食べたものの画像を入力してください。</h1>
-        <button id="start-button">ゲームスタート</button>
+    <div id="image-input-screen"><!-- 複数画像入力画面 -->
+        <h1>今日食べたものの画像を入力してください</h1>
+        <div class="image-upload-container">
+            <input type="file" id="image-upload" accept="image/*" multiple>
+            <label for="image-upload" class="upload-button">画像を選択</label>
+            <p class="upload-instruction">または画像をここにドラッグ＆ドロップ</p>
+        </div>
+        
+        <div id="preview-container" class="image-preview-container">
+            <!-- アップロードされた画像のプレビューがここに表示されます -->
+        </div>
+        
+        <div class="button-container">
+            <button id="reset-images" class="secondary-button">リセット</button>
+            <button id="to-camera-screen" class="primary-button" disabled>次へ</button>
+        </div>
     </div>
     <div id="camera-screen"><!-- カメラ画像を表示 -->
         <h1>カメラを起動しています...</h1>

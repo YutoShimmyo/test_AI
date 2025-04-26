@@ -10,7 +10,7 @@ const gameState = {
 // DOM要素の取得
 const screens = {
     title: document.getElementById('title-screen'),
-    imageinput: document.getElementById('image-input-screen'),
+    imageInput: document.getElementById('image-input-screen'),
     camera: document.getElementById('camera-screen'),
     inputTarget: document.getElementById('input_target-screen'),
     inputWord: document.getElementById('input_word-screen'),
@@ -21,6 +21,8 @@ const screens = {
 
 const buttons = {
     start: document.getElementById('start-button'),
+    toCamera: document.getElementById('to-camera-screen'),
+    resetImages: document.getElementById('reset-images'),
     submitTarget: document.getElementById('to_input_word-screen'),
     submitWord: document.getElementById('to_wait-screen'),
     ready: document.getElementById('to_read_target-screen'),
@@ -90,8 +92,8 @@ function initializeGame() {
     buttons.start.addEventListener('click', () => {
         gameState.currentWord = 'computer';
         gameState.usedWords = [gameState.currentWord];
-        showScreen('camera');
-        startCamera();
+        showScreen('imageInput');
+        setupImageUpload();
     });
 }
 
@@ -272,6 +274,132 @@ buttons.nextQuestion.addEventListener('click', () => {
     gameState.usedWords.push("computer");
     showScreen('inputWord');
 });
+
+// 画像アップロード関連の変数
+const uploadedImages = [];
+const maxImages = 6; // 最大アップロード可能枚数
+
+// 画像アップロード機能のセットアップ
+function setupImageUpload() {
+    const fileInput = document.getElementById('image-upload');
+    const previewContainer = document.getElementById('preview-container');
+    const uploadContainer = document.querySelector('.image-upload-container');
+    const nextButton = buttons.toCamera;
+
+    // ファイル選択時の処理
+    fileInput.addEventListener('change', handleFileSelect);
+
+    // ドラッグ＆ドロップの処理
+    uploadContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadContainer.classList.add('dragover');
+    });
+
+    uploadContainer.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadContainer.classList.remove('dragover');
+    });
+
+    uploadContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadContainer.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length > 0) {
+            handleFiles(e.dataTransfer.files);
+        }
+    });
+
+    // リセットボタンの処理
+    buttons.resetImages.addEventListener('click', () => {
+        uploadedImages.length = 0;
+        previewContainer.innerHTML = '';
+        updateNextButtonState();
+        fileInput.value = '';
+    });
+
+    // 次へボタンの処理
+    buttons.toCamera.addEventListener('click', () => {
+        showScreen('camera');
+        startCamera();
+    });
+}
+
+// ファイル選択時の処理
+function handleFileSelect(e) {
+    handleFiles(e.target.files);
+}
+
+// ファイル処理
+function handleFiles(files) {
+    const previewContainer = document.getElementById('preview-container');
+    
+    // ファイルごとに処理
+    for (let i = 0; i < files.length; i++) {
+        // 最大枚数チェック
+        if (uploadedImages.length >= maxImages) {
+            alert(`最大${maxImages}枚までアップロードできます`);
+            break;
+        }
+
+        const file = files[i];
+        
+        // 画像ファイルかどうかチェック
+        if (!file.type.match('image.*')) {
+            alert('画像ファイルを選択してください');
+            continue;
+        }
+
+        // アップロード済み画像に追加
+        uploadedImages.push(file);
+        
+        // サムネイル作成
+        const thumbnail = document.createElement('div');
+        thumbnail.className = 'image-thumbnail';
+        
+        const img = document.createElement('img');
+        const reader = new FileReader();
+        
+        reader.onload = (function(aImg) {
+            return function(e) {
+                aImg.src = e.target.result;
+            };
+        })(img);
+        
+        reader.readAsDataURL(file);
+        thumbnail.appendChild(img);
+        
+        // 削除ボタン作成
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-button';
+        deleteBtn.innerHTML = '×';
+        deleteBtn.addEventListener('click', function() {
+            const index = uploadedImages.indexOf(file);
+            if (index > -1) {
+                uploadedImages.splice(index, 1);
+            }
+            thumbnail.remove();
+            updateNextButtonState();
+        });
+        
+        thumbnail.appendChild(deleteBtn);
+        previewContainer.appendChild(thumbnail);
+    }
+    
+    updateNextButtonState();
+}
+
+// 次へボタンの有効/無効を更新
+function updateNextButtonState() {
+    const nextButton = buttons.toCamera;
+    if (uploadedImages.length > 0) {
+        nextButton.disabled = false;
+    } else {
+        nextButton.disabled = true;
+    }
+}
 
 // カメラ関連の変数
 let videoElement;
