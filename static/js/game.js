@@ -3,17 +3,47 @@ let objects = [];
 let mouthCircle = null; // 口の中心を表す円オブジェクト
 let mouthPosition = { x: 0, y: 0, size: 20 }; // 口の中心座標と大きさ
 let score = 0; // スコア
+let prevMouthSize = 0; // 前フレームの口の開き具合
+const MOUTH_CLOSE_THRESHOLD = 15; // 口を閉じたと判定する閾値
+let isMouthOpened = false; // 口が開いているかどうか
 
 // 口の中心座標を更新する関数（script.jsから呼び出される）
 function updateMouthPosition(x, y, size) {
+    // 前回の口のサイズを保存
+    prevMouthSize = mouthPosition.size;
+    
+    // 新しい座標とサイズを設定
     mouthPosition.x = x;
     mouthPosition.y = y;
     mouthPosition.size = size || 20; // サイズが指定されなければデフォルト値を使用
+    
+    // 口の開閉状態を判定
+    // 前回よりも大きくなったら「開いた」と判定
+    if (mouthPosition.size > prevMouthSize + 5) {
+        isMouthOpened = true;
+        console.log('口が開きました - サイズ:', mouthPosition.size);
+    }
+    // 開いた状態から一定以下に小さくなったら「閉じた」と判定
+    else if (isMouthOpened && mouthPosition.size < MOUTH_CLOSE_THRESHOLD) {
+        isMouthOpened = false;
+        console.log('口が閉じました - サイズ:', mouthPosition.size);
+    }
 
     // 口の円オブジェクトが存在しなければ作成
     if (!mouthCircle) {
         mouthCircle = new MouthCircle(x, y, size);
         objects.push(mouthCircle);
+    }
+    
+    // 口の状態に応じて色を変更
+    if (mouthCircle) {
+        if (isMouthOpened) {
+            mouthCircle.color = 'rgba(255, 150, 0, 0.5)'; // 開いているとき：オレンジ色
+            mouthCircle.borderColor = 'orange';
+        } else {
+            mouthCircle.color = 'rgba(0, 255, 0, 0.5)'; // 閉じているとき：緑色
+            mouthCircle.borderColor = 'green';
+        }
     }
 }
 
@@ -157,8 +187,12 @@ class Target extends GameObject {
             const distance = Math.sqrt(dx * dx + dy * dy);
             
             // 当たり判定（簡易版：中心点の距離がターゲットの半径と口の半径の和より小さければ衝突）
-            if (distance < (Math.min(this.width, this.height) / 2 + mouthCircle.radius)) {
-                console.log('ターゲットと口が接触！');
+            const isColliding = distance < (Math.min(this.width, this.height) / 2 + mouthCircle.radius);
+            
+            // 衝突していて、かつ「口が開いた状態から閉じた瞬間」の場合のみ捕獲
+            if (isColliding && isMouthOpened === false && prevMouthSize > MOUTH_CLOSE_THRESHOLD) {
+                console.log('ターゲットを捕獲！口のサイズ変化:', prevMouthSize, '=>', mouthPosition.size);
+                
                 // 衝突時の処理
                 score++; // スコアを増加
                 
@@ -174,6 +208,14 @@ class Target extends GameObject {
                 
                 // 速度を少し上げる（難易度増加）
                 this.speed = Math.min(this.speed + 0.2, 10); // 最大速度は10に制限
+                
+                // 視覚的なフィードバック（キャンバスを一瞬点滅させるなど）
+                if (canvasElement && canvasElement.style) {
+                    canvasElement.style.backgroundColor = 'rgba(255, 255, 0, 0.2)';
+                    setTimeout(() => {
+                        canvasElement.style.backgroundColor = 'transparent';
+                    }, 100);
+                }
             }
         }
     }
