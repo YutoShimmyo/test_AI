@@ -10,6 +10,7 @@ const gameState = {
 // DOM要素の取得
 const screens = {
     title: document.getElementById('title-screen'),
+    camera: document.getElementById('camera-screen'),
     inputTarget: document.getElementById('input_target-screen'),
     inputWord: document.getElementById('input_word-screen'),
     wait: document.getElementById('wait-screen'),
@@ -86,9 +87,10 @@ function initializeGame() {
     
     // ゲーム開始処理
     buttons.start.addEventListener('click', () => {
-        gameState.currentWord = 'しりとり';
+        gameState.currentWord = 'computer';
         gameState.usedWords = [gameState.currentWord];
-        showScreen('inputWord');
+        showScreen('camera');
+        startCamera();
     });
 }
 
@@ -266,8 +268,93 @@ buttons.nextQuestion.addEventListener('click', () => {
     inputs.word.value = '';
     inputs.answer.value = '';
     displayElements.wordImage.style.display = 'none';
-    showScreen('inputTarget');
+    gameState.usedWords.push("computer");
+    showScreen('inputWord');
 });
+
+// カメラ関連の変数
+let videoElement;
+let canvasElement;
+let canvasContext;
+let cameraStream;
+
+// カメラ起動関数
+async function startCamera() {
+    videoElement = document.getElementById('video');
+    canvasElement = document.getElementById('canvas');
+    
+    if (!videoElement || !canvasElement) {
+        console.error('Video or canvas element not found');
+        alert('カメラの初期化に失敗しました');
+        showScreen('title');
+        return;
+    }
+    
+    canvasContext = canvasElement.getContext('2d');
+    
+    try {
+        // カメラストリームの取得
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: 'environment',
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            }
+        });
+        
+        // ビデオ要素にストリームを設定
+        videoElement.srcObject = cameraStream;
+        
+        // ビデオ再生準備完了時の処理
+        videoElement.onloadedmetadata = () => {
+            // Canvasサイズをビデオサイズに合わせる
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+            
+            // Canvasを表示
+            canvasElement.style.display = 'block';
+            
+            // 見出しテキストを変更
+            const heading = document.querySelector('#camera-screen h1');
+            if (heading) {
+                heading.textContent = 'カメラ画像';
+            }
+            
+            // 定期的にフレームを描画
+            setInterval(drawVideoFrame, 100);
+            
+            // 5秒後に次の画面へ自動遷移（オプション）
+            setTimeout(() => {
+                showScreen('inputWord');
+                stopCamera();
+            }, 5000);
+        };
+        
+    } catch (error) {
+        console.error('カメラの起動に失敗しました:', error);
+        alert('カメラの起動に失敗しました: ' + error.message);
+        showScreen('inputWord');
+    }
+}
+
+// ビデオフレームをCanvasに描画
+function drawVideoFrame() {
+    if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA && canvasContext) {
+        canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+    }
+}
+
+// カメラ停止関数
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    
+    if (videoElement) {
+        videoElement.srcObject = null;
+    }
+}
 
 // DOMの読み込み完了後に初期化
 document.addEventListener('DOMContentLoaded', initializeGame);
