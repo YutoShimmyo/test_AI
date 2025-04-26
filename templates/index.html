@@ -50,11 +50,25 @@
             <button id="reset-images" class="secondary-button">リセット</button>
             <button id="to-camera-screen" class="primary-button" disabled>次へ</button>
         </div>
+    <div id="mandara-screen"><!-- タイトル -->
+        <h1>曼荼羅画像</h1>
+        <h2>反省してください</h2>
+        <div id="image-container" style="margin: 20px 0;">
+            <img id="mandara-image" src=""  style="max-width: 300px; max-height: 300px;">
+        </div>
+    </div>
     </div>
     <div id="camera-screen"><!-- カメラ画像を表示 -->
         <h1>カメラを起動しています...</h1>
         <div class="camera-container">
-            <video id="video" autoplay style="display:none;"></video>
+            <video id="video" playsinline style="
+                -webkit-transform: scaleX(-1);
+                transform: scaleX(-1);
+                visibility: hidden;
+                width: auto;
+                height: auto;
+                ">
+                </video>
             <canvas id="canvas" style="display:block; width:100%; max-width:640px; margin:10px auto; border:1px solid #999;"></canvas>
         </div>
     </div>
