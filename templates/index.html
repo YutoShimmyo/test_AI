@@ -11,15 +11,26 @@
         <h1>しりとりゲーム</h1>
         <button id="start-button">ゲームスタート</button>
     </div>
+    <div id="image-input-screen"><!-- タイトル -->
+        <h1>今日食べたものの画像を入力してください。</h1>
+        <button id="start-button">ゲームスタート</button>
+    </div>
+    <div id="camera-screen"><!-- カメラ画像を表示 -->
+        <h1>カメラを起動しています...</h1>
+        <div class="camera-container">
+            <video id="video" autoplay style="display:none;"></video>
+            <canvas id="canvas" style="display:block; width:100%; max-width:640px; margin:10px auto; border:1px solid #999;"></canvas>
+        </div>
+    </div>
     <div id="input_target-screen"> <!-- お題の入力 -->
         <h1>前回の入力から続くお題を入力してください！</h1>
         <input type="text" id="input-word">
         <button id="to_input_word-screen">決定</button>
     </div>
     <div id="input_word-screen"> <!-- お題を説明する文字の入力 -->
-        <h1 id="current-word">お題を説明する文字を入力してください！</h1>
+        <h1 id="description">お題を説明する文字を入力してください！</h1>
         <h2 id="current-word">お題 : シリトリ</h2>
-        <h2 id="current-word">---漢字のみで単語を表してください---</h2>  <!-- お題を説明する文字の制限 -->
+        <h2 id="attention">---漢字のみで単語を表してください---</h2>  <!-- お題を説明する文字の制限 -->
         <input type="text" id="input-word">
         <button id="to_wait-screen">決定</button>
     </div>
