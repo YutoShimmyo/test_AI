@@ -52,7 +52,7 @@ def upload_image():
             img = Image.open(io.BytesIO(img_bytes))
             prompt = """
             この画像に写っている料理や食品に使われている主要な原材料（動物や植物の名前）を特定し、
-            英語の小文字でリスト形式でJSON配列として出力してください。
+            英語の小文字でリスト形式でJSON配列として出力してください。卵とかは駄目で、卵であれば、chickenにしてほしい。全部動物or植物の名前にして。
             例: ["wheat", "beef", "tomato", "lettuce", "cow"]
             他の説明や前置きは不要です。JSON配列のみを出力してください。
             もし特定が難しい場合は、["unknown_life"] と出力してください。
