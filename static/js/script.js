@@ -652,7 +652,12 @@ async function processVideoFrame() {
             
             // 顔のランドマークを検出
             console.log('Detecting faces...');
-            const faces = await faceDetector.estimateFaces(videoElement, { flipHorizontal: false });
+            try{
+                faces = await faceDetector.estimateFaces(videoElement, { flipHorizontal: false });
+            }
+            catch(error){
+                alert(error)
+            }
             console.log('Faces detected:', faces ? faces.length : 0);
             faceDetectionAttempts++;
             
