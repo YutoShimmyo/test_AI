@@ -10,6 +10,7 @@ const gameState = {
 // DOM要素の取得
 const screens = {
     title: document.getElementById('title-screen'),
+    imageinput: document.getElementById('image-input-screen'),
     camera: document.getElementById('camera-screen'),
     inputTarget: document.getElementById('input_target-screen'),
     inputWord: document.getElementById('input_word-screen'),
@@ -324,10 +325,10 @@ async function startCamera() {
             setInterval(drawVideoFrame, 100);
             
             // 5秒後に次の画面へ自動遷移（オプション）
-            setTimeout(() => {
+           /* setTimeout(() => {
                 showScreen('inputWord');
                 stopCamera();
-            }, 5000);
+            }, 5000);*/
         };
         
     } catch (error) {
