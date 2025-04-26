@@ -519,9 +519,11 @@ function detectMouthCenter(landmarks) {
     }
 }
 
+// ゲーム関連の変数
+let gameStarted = false; // ゲームが開始されたかどうか
+
 // ビデオフレームを処理し、顔検出と口の中心座標の描画を行う
 async function processVideoFrame() {
-
     if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA && canvasContext && isDetectorReady) {
         try {
             // canvasにビデオフレームを描画
@@ -543,12 +545,27 @@ async function processVideoFrame() {
                 if (mouthInfo) {
                     const [mouthCenterX, mouthCenterY, mouthOpenSize] = mouthInfo;
                     
-                    // 口の中心に丸を描画（開き具合に応じて丸のサイズを変更）
-                    canvasContext.strokeStyle = '#FF0000';
-                    canvasContext.lineWidth = 2;
-                    canvasContext.beginPath();
-                    canvasContext.arc(mouthCenterX, mouthCenterY, mouthOpenSize, 0, 2 * Math.PI);
-                    canvasContext.stroke();
+                    // game.jsに口の中心座標を渡す
+                    if (typeof updateMouthPosition === 'function') {
+                        updateMouthPosition(mouthCenterX, mouthCenterY, mouthOpenSize);
+                        
+                        // ゲームが開始されていなければ開始
+                        if (!gameStarted) {
+                            gameStarted = true;
+                            // ゲーム開始時の処理
+                            // ターゲットの作成（datasets内の画像を利用）
+                            if (typeof createTarget === 'function') {
+                                createTarget(40, 40, 'datasets/cow.png');
+                                createTarget(40, 40, 'datasets/milk.png');
+                                createTarget(40, 40, 'datasets/pig.png');
+                            }
+                        }
+                    }
+                    
+                    // ゲーム描画の後に情報を表示
+                    if (typeof draw === 'function') {
+                        draw(canvasContext);
+                    }
                     
                     // 口の中心座標をテキスト表示
                     canvasContext.fillStyle = '#00FF00';
