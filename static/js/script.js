@@ -518,26 +518,66 @@ async function startCamera() {
 // 顔のランドマークから口の中心座標と開き具合を検出する関数
 function detectMouthCenter(landmarks) {
     try {
-        // 口の内側の上唇と下唇のポイントを取得（MediaPipe Facemeshのランドマークインデックス）
-        // 内側下唇の真ん中（索引 78 = MediaPipeの口内側下唇の中央部）
-        const innerLowerLip = landmarks[78];
-        // 内側上唇の真ん中（索引 13 = MediaPipeの口内側上唇の中央部）
-        const innerUpperLip = landmarks[13];
+        console.log('Landmarks available:', landmarks.length);
         
-        // 口の開き具合：内側上唇と内側下唇のY座標の差分
-        const openMouthSize = innerLowerLip[1] - innerUpperLip[1];
-        // 口の中心位置のY座標
-        const y = innerLowerLip[1] - openMouthSize / 2;
+        // MediaPipe Facemeshのランドマークは、TypedArrayのリスト形式で
+        // landmarks[i] = { x, y, z } の形式でアクセスする必要がある
         
-        // 口の中心のX座標、Y座標、開き具合を返す
-        // 開き具合が閾値より小さい場合は閾値を返す
-        return [
-            innerLowerLip[0], // X座標
-            y, // Y座標
-            openMouthSize < MOUTH_MIN_SIZE ? MOUTH_MIN_SIZE : openMouthSize // 開き具合
-        ];
+        // 口に関連するランドマークのインデックス（MediaPipe FaceMesh）
+        // 上唇と下唇の中央部のランドマーク
+        const upperLipIndex = 13;  // 上唇中央
+        const lowerLipIndex = 14;  // 下唇中央
+        
+        // ランドマークが存在するか確認
+        if (landmarks.length <= Math.max(upperLipIndex, lowerLipIndex)) {
+            console.error('必要なランドマークが存在しません');
+            return null;
+        }
+        
+        // ランドマークを取得（MediaPipe FaceMeshでは、各ランドマークはオブジェクトになっている）
+        const upperLip = landmarks[upperLipIndex];
+        const lowerLip = landmarks[lowerLipIndex];
+        
+        console.log('Upper lip landmark:', upperLip);
+        console.log('Lower lip landmark:', lowerLip);
+        
+        // オブジェクト形式の場合（{x, y, z}の形式）
+        if (typeof upperLip === 'object' && 'y' in upperLip) {
+            // 口の開き具合：上唇と下唇のY座標の差分
+            const openMouthSize = Math.abs(lowerLip.y - upperLip.y);
+            // 口の中心位置のY座標
+            const y = (lowerLip.y + upperLip.y) / 2;
+            // X座標も同様に中間点を計算
+            const x = (lowerLip.x + upperLip.x) / 2;
+            
+            // 口の中心座標と開き具合を返す
+            return [
+                x, // X座標
+                y, // Y座標
+                openMouthSize < MOUTH_MIN_SIZE ? MOUTH_MIN_SIZE : openMouthSize // 開き具合
+            ];
+        }
+        // 配列形式の場合（[x, y]の形式）
+        else if (Array.isArray(upperLip) && upperLip.length >= 2) {
+            // 口の開き具合：上唇と下唇のY座標の差分
+            const openMouthSize = Math.abs(lowerLip[1] - upperLip[1]);
+            // 口の中心位置のY座標
+            const y = (lowerLip[1] + upperLip[1]) / 2;
+            // X座標も同様に中間点を計算
+            const x = (lowerLip[0] + upperLip[0]) / 2;
+            
+            // 口の中心座標と開き具合を返す
+            return [
+                x, // X座標
+                y, // Y座標
+                openMouthSize < MOUTH_MIN_SIZE ? MOUTH_MIN_SIZE : openMouthSize // 開き具合
+            ];
+        } else {
+            console.error('ランドマークのフォーマットが不明:', upperLip);
+            return null;
+        }
     } catch (error) {
-        console.error('口の中心検出に失敗:', error);
+        console.error('口の中心検出に失敗:', error, error.stack);
         return null;
     }
 }
