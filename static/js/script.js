@@ -1,7 +1,12 @@
 // ゲームの状態管理
 const gameState = {
     currentScreen: 'title',
+    currentWord: '',
+    description: '',
+    usedWords: [],
+    playerTurn: 1,
     gameImagePaths: []
+    
 };
 
 // DOM要素の取得
@@ -9,12 +14,24 @@ const screens = {
     title: document.getElementById('title-screen'),
     imageInput: document.getElementById('image-input-screen'),
     camera: document.getElementById('camera-screen'),
+    inputTarget: document.getElementById('input_target-screen'),
+    inputWord: document.getElementById('input_word-screen'),
+    wait: document.getElementById('wait-screen'),
+    readTarget: document.getElementById('read_target-screen'),
+    result: document.getElementById('result-screen')
+
 };
 
 const buttons = {
     start: document.getElementById('start-button'),
     toCamera: document.getElementById('to-camera-screen'),
     resetImages: document.getElementById('reset-images'),
+    submitTarget: document.getElementById('to_input_word-screen'),
+    submitWord: document.getElementById('to_wait-screen'),
+    ready: document.getElementById('to_read_target-screen'),
+    next: document.getElementById('to_result-screen'),
+    nextQuestion: document.getElementById('to_init')
+
 };
 /*
 const inputs = {
