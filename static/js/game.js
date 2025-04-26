@@ -40,15 +40,9 @@ class Tartget extends GameObject{
     constructor(x, y, width, height, imagePath){
         super(x, y, width, height);
         this.image = loadImage(imagePath);
-    }
-    draw(){
-        //this.x, this.y, this.width, this.heightを使って描画する
-    }
-
-    update(){
-        //this.x, this.y, this.width, this.heightを使って更新する
-    }
-}
+        this.y = -10;
+        this.x = Math.floor(Math.random() * (canvas.width - this.width));
+        this.speed = Math.floor(Math.random() * 5) + 1; // 1から5のランダムな速度
     }
     draw(){
         //this.x, this.y, this.width, this.heightを使って描画する

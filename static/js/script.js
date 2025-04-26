@@ -521,6 +521,7 @@ function detectMouthCenter(landmarks) {
 
 // ビデオフレームを処理し、顔検出と口の中心座標の描画を行う
 async function processVideoFrame() {
+
     if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA && canvasContext && isDetectorReady) {
         try {
             // canvasにビデオフレームを描画
