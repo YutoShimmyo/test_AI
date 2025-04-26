@@ -1,12 +1,17 @@
+# shimmyo.py の必要なインポートを追加・確認
 import os
 import google.generativeai as genai
 from flask import Flask, request, jsonify, render_template
 import io
 from PIL import Image
-import json # GeminiからのJSON応答をパースするため
-import re # 応答形式が不安定な場合に備え、リストを抽出するため
+import json
+import re
+import traceback
+# ★ os.path をインポート
+import os.path
 
 app = Flask(__name__)
+
 
 # --- Gemini APIの設定 ---
 try:
@@ -25,6 +30,9 @@ except Exception as e:
     print(f"Gemini API の設定または初期化に失敗しました: {e}")
     model = None # エラーが発生したらモデルをNoneにする
 
+DATASETS_FOLDER = "datasets"
+DEFAULT_IMAGE_PATH = os.path.join(DATASETS_FOLDER, "unknown.png").replace("\\", "/") # デフォルト画像パス (存在確認もすると尚良い)
+
 @app.route('/')
 def index():
     """画像アップロードページを表示"""
@@ -32,23 +40,17 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
-    """画像を受け取り、Gemini APIで分析して「命」リストを返す"""
+    """画像を受け取り、分析して「命」に対応する画像パスリストを返す"""
     if 'file' not in request.files:
         return jsonify({"error": "ファイルがありません"}), 400
-
     file = request.files['file']
     if file.filename == '':
         return jsonify({"error": "ファイルが選択されていません"}), 400
 
     if file and model:
         try:
-            # 画像データを読み込み、PIL Imageオブジェクトに変換
             img_bytes = file.read()
             img = Image.open(io.BytesIO(img_bytes))
-
-            # --- Gemini APIへのプロンプト ---
-            # ここで指示内容を調整して、期待する出力を得られるようにします
-            # JSON形式での出力を依頼すると、パースしやすくなります
             prompt = """
             この画像に写っている料理や食品に使われている主要な原材料（動物や植物の名前）を特定し、
             英語の小文字でリスト形式でJSON配列として出力してください。
@@ -56,70 +58,76 @@ def upload_image():
             他の説明や前置きは不要です。JSON配列のみを出力してください。
             もし特定が難しい場合は、["unknown_life"] と出力してください。
             """
-
-            # Gemini APIに画像とプロンプトを送信
-            print("--- Sending request to Gemini API ---") # デバッグ用
+            print("--- Sending request to Gemini API ---")
             response = model.generate_content([prompt, img], stream=False)
-            # 安全性設定でブロックされた場合の応答を確認
+
             if not response.parts:
                  print("--- Gemini API Response Blocked ---")
                  print(response.prompt_feedback)
-                 # 必要に応じて、候補が利用可能か確認
                  if response.candidates and response.candidates[0].finish_reason != 'SAFETY':
-                      # 別の候補がある場合の処理（ここではエラーとして扱う）
                       pass
                  return jsonify({"error": "不適切なコンテンツの可能性があるため、応答がブロックされました。"}), 400
 
-
             response_text = response.text
-            print(f"--- Gemini API Raw Response Text:\n{response_text}\n---") # デバッグ用
+            print(f"--- Gemini API Raw Response Text:\n{response_text}\n---")
 
-            # --- Geminiからの応答をパースしてリストを抽出 ---
             life_list = []
+            # --- Geminiからの応答をパースして「命」リストを抽出 ---
+            # (省略... 現在のコードのまま)
             try:
-                # まずJSONとしてパースを試みる
-                # Geminiが ```json ... ``` のようにマークダウンで囲む場合があるので除去
                 cleaned_response = re.sub(r'^```json\s*|\s*```$', '', response_text.strip())
                 parsed_data = json.loads(cleaned_response)
                 if isinstance(parsed_data, list):
-                    # 全て小文字の英字か確認・フィルタリング (より安全に)
                     life_list = [item.lower() for item in parsed_data if isinstance(item, str) and item.islower() and item.isalpha()]
                 else:
                     print("Warning: Gemini response was valid JSON but not a list.")
-                    # JSONだがリストでない場合の代替処理（必要なら）
-
             except json.JSONDecodeError:
-                # JSONパースに失敗した場合、テキストからリスト形式の部分を正規表現で抽出する試み
                 print("Warning: Failed to parse Gemini response as JSON. Trying regex extraction.")
-                # 例: ['apple', 'banana'] のような形式を抽出
                 match = re.search(r'\[\s*([\'"]?\w+[\'"]?\s*,\s*)*[\'"]?\w+[\'"]?\s*\]', cleaned_response)
                 if match:
                     try:
-                        # evalはセキュリティリスクがあるので注意が必要だが、ここでは限定的に使用
-                        # 文字列リテラルのみを許可するようにするなどの対策が望ましい
                         potential_list = eval(match.group(0))
                         if isinstance(potential_list, list):
                              life_list = [item.lower() for item in potential_list if isinstance(item, str) and item.isalpha()]
                     except Exception as eval_err:
                          print(f"Error evaluating extracted list: {eval_err}")
-                if not life_list: # 正規表現でも抽出できなかった場合
+                if not life_list:
                      print("Warning: Could not extract list using regex.")
-                     # 最終手段として、単語に分割するなど（精度は低い）
-                     # words = re.findall(r'\b[a-z]+\b', cleaned_response.lower())
-                     # life_list = list(set(words)) # 重複除去
-                     life_list = ["unknown_life"] # またはデフォルト値
-
-            # 抽出されたリストが空ならデフォルト値を入れる
+                     life_list = ["unknown_life"]
             if not life_list:
                  life_list = ["unknown_life"]
+            # --- パース処理ここまで ---
 
-            print(f"--- Returning Lives: {life_list} ---") # デバッグ用
-            return jsonify({"lives": life_list})
+            print(f"--- Detected Lives: {life_list} ---")
+
+            # --- ★ 「命」リストから画像パスリストを作成 ★ ---
+            image_path_list = []
+            for life in life_list:
+                # datasetsフォルダ内の画像パスを組み立てる (例: datasets/cow.png)
+                potential_path = os.path.join(DATASETS_FOLDER, f"{life}.png")
+                # Windowsパスの '\' を '/' に置換（Webパスのため）
+                potential_path = potential_path.replace("\\", "/")
+
+                # (推奨) 実際にファイルが存在するか確認
+                # os.path.exists は shimmyo.py から見たパスでチェックします
+                if os.path.exists(potential_path):
+                    image_path_list.append(potential_path)
+                    print(f"Found image for '{life}': {potential_path}")
+                else:
+                    # 存在しない場合はデフォルト画像パスを追加
+                    image_path_list.append(DEFAULT_IMAGE_PATH)
+                    print(f"Image for '{life}' not found at '{potential_path}', using default.")
+
+            # 重複を除去したい場合は Set を使う (任意)
+            # image_path_list = sorted(list(set(image_path_list)))
+
+            print(f"--- Returning Image Paths: {image_path_list} ---")
+
+            # ★ JSONのキーを "image_paths" にして画像パスのリストを返す
+            return jsonify({"image_paths": image_path_list})
 
         except Exception as e:
             print(f"Error processing image with Gemini: {e}")
-            # エラーの詳細をログに出力 (デバッグ用)
-            import traceback
             traceback.print_exc()
             return jsonify({"error": f"画像の処理中にエラーが発生しました: {e}"}), 500
     elif not model:
@@ -128,4 +136,4 @@ def upload_image():
         return jsonify({"error": "不明なエラー"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000) # デバッグモード、外部アクセス許可
+    app.run(debug=True, host='0.0.0.0', port=5000)
