@@ -5,11 +5,26 @@
   <title>Face API - Mouth Detection Debug版</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <style>
+    .camera-container {
+      background-color: #e0e0e0;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px auto;
+      width: 700px;
+    }
+
     canvas, video {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
+      position: relative;
+      display: block;
+      margin: 0 auto;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      border: 4px solid #ffffff;
+      border-radius: 8px;
+      background-color: #e0e0e0;
+    }
+    
+    canvas {
+      background-color: rgba(0, 0, 0, 0.01);
     }
   </style>
 </head>
@@ -40,8 +55,22 @@
   </div>
   <div id="camera-screen"><!-- カメラ画像を表示 -->
     <div class="camera-container">
-      <video id="video" width="640" height="480" autoplay muted></video>
-      <canvas id="overlay" width="640" height="480"></canvas>
+      <div class="video-container">
+        <video id="video" width="640" height="480" autoplay muted></video>
+        <canvas id="overlay" width="640" height="480"></canvas>
+      </div>
+      <style>
+        .video-container {
+          position: relative;
+          width: 640px;
+          height: 480px;
+        }
+        #overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+        }
+      </style>
     </div>
   </div>
 
