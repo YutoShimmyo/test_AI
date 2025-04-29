@@ -13,7 +13,7 @@ body {
     background-image: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
 }
 
-#title-screen, #game-screen, #image-input-screen, #camera-screen, #input_target-screen, #input_word-screen, #wait-screen, #read_target-screen, #result-screen {
+#title-screen, #game-screen, #image-input-screen,#input_target-screen, #input_word-screen, #wait-screen, #read_target-screen, #result-screen {
     background-color: #ffffff;
     padding: 40px;
     border-radius: 16px;
@@ -21,6 +21,21 @@ body {
     text-align: center;
     width: 80%;
     max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+#camera-screen{
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 80%;
     display: flex;
     flex-direction: column;
     justify-content: center;

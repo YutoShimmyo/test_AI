@@ -32,7 +32,7 @@ async function setup() {
             .detectSingleFace(video, options)
             .withFaceLandmarks();
             
-            console.log('Detection result:', detection);
+            //console.log('Detection result:', detection);
             
             if (detection) {
             const resizedDetection = faceapi.resizeResults(detection, {
@@ -44,7 +44,7 @@ async function setup() {
             const allLandmarks = resizedDetection.landmarks.positions; // ←ここ重要！
             const mouth = allLandmarks.slice(48, 68); // ←口は48～67番！
         
-            console.log('Mouth landmarks:', mouth);
+            //console.log('Mouth landmarks:', mouth);
             context.clearRect(0, 0, canvas.width, canvas.height);
             if (mouth && mouth.length > 0) {
                 const xs = mouth.map(p => p.x);
@@ -62,15 +62,44 @@ async function setup() {
                 context.strokeStyle = 'red';
                 context.rect(minX, minY, width, height);
                 context.stroke();
+
+                game_draw([mouth[0].x, mouth[0].y, mouth[0].size], context);
             }
             
             }
-            
             requestAnimationFrame(detect);
                 
         };
+        GameObject.canvas = canvas;
         detect();
         //context.fillStyle = 'red';
         //context.fillRect(5, 10, 200, 300);
     });
+}
+
+function game_draw(mouthInfo, canvas){
+    const [mouthCenterX, mouthCenterY, mouthOpenSize] = mouthInfo;
+        
+    // game.jsに口の中心座標を渡す
+    if (typeof updateMouthPosition === 'function') {
+        updateMouthPosition(mouthCenterX, mouthCenterY, mouthOpenSize);
+        
+        // ゲームが開始されていなければ開始
+        if (!gameStarted) {
+            gameStarted = true;
+            console.log('Game started!');
+            // ゲーム開始時の処理
+            // ターゲットの作成（datasets内の画像を利用）
+            if (typeof createTarget === 'function') {
+                createTarget(40, 40, 'datasets/cow.png');
+                createTarget(40, 40, 'datasets/milk.png');
+                createTarget(40, 40, 'datasets/pig.png');
+            }
+        }
+    }
+    
+    // ゲーム描画を行う
+    if (typeof draw === 'function') {
+        draw(canvas);
+    }
 }

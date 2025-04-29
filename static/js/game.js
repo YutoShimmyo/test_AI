@@ -87,6 +87,7 @@ const loadImage = src => new Promise((resolve, reject) => {
 });
 
 class GameObject{
+    static canvas = null; // canvasはscript.jsで設定される
     constructor(x, y, width, height){
         this.x = x;
         this.y = y;
@@ -153,7 +154,7 @@ class Target extends GameObject {
 
         // 初期位置の設定
         this.y = -10;
-        this.x = Math.floor(Math.random() * (canvasElement.width - this.width));
+        this.x = Math.floor(Math.random() * (GameObject.canvas.width - this.width));
         this.speed = Math.floor(Math.random() * 5) + 1; // 1から5のランダムな速度
     }
 
@@ -175,9 +176,9 @@ class Target extends GameObject {
         this.y += this.speed;
 
         // 画面外に出たら上に戻す
-        if (this.y > canvasElement.height) {
+        if (this.y > GameObject.canvas.height) {
             this.y = -this.height;
-            this.x = Math.floor(Math.random() * (canvasElement.width - this.width));
+            this.x = Math.floor(Math.random() * (GameObject.canvas.width - this.width));
         }
 
         // 口との当たり判定（口の円と重なっているか）
@@ -204,16 +205,16 @@ class Target extends GameObject {
                 
                 // ターゲットをリセット
                 this.y = -this.height;
-                this.x = Math.floor(Math.random() * (canvasElement.width - this.width));
+                this.x = Math.floor(Math.random() * (GameObject.canvas.width - this.width));
                 
                 // 速度を少し上げる（難易度増加）
                 this.speed = Math.min(this.speed + 0.2, 10); // 最大速度は10に制限
                 
                 // 視覚的なフィードバック（キャンバスを一瞬点滅させるなど）
-                if (canvasElement && canvasElement.style) {
-                    canvasElement.style.backgroundColor = 'rgba(255, 255, 0, 0.2)';
+                if (GameObject.canvas && GameObject.canvas.style) {
+                    GameObject.canvas.style.backgroundColor = 'rgba(255, 255, 0, 0.2)';
                     setTimeout(() => {
-                        canvasElement.style.backgroundColor = 'transparent';
+                        GameObject.canvas.style.backgroundColor = 'transparent';
                     }, 100);
                 }
             }
