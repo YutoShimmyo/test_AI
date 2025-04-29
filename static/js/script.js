@@ -14,23 +14,23 @@ const screens = {
     title: document.getElementById('title-screen'),
     imageInput: document.getElementById('image-input-screen'),
     camera: document.getElementById('camera-screen'),
-    inputTarget: document.getElementById('input_target-screen'),
-    inputWord: document.getElementById('input_word-screen'),
-    wait: document.getElementById('wait-screen'),
-    readTarget: document.getElementById('read_target-screen'),
-    result: document.getElementById('result-screen')
+    //inputTarget: document.getElementById('input_target-screen'),
+    //inputWord: document.getElementById('input_word-screen'),
+    //wait: document.getElementById('wait-screen'),
+    //readTarget: document.getElementById('read_target-screen'),
+    //result: document.getElementById('result-screen')
 
 };
 
 const buttons = {
     start: document.getElementById('start-button'),
     toCamera: document.getElementById('to-camera-screen'),
-    resetImages: document.getElementById('reset-images'),
-    submitTarget: document.getElementById('to_input_word-screen'),
-    submitWord: document.getElementById('to_wait-screen'),
-    ready: document.getElementById('to_read_target-screen'),
-    next: document.getElementById('to_result-screen'),
-    nextQuestion: document.getElementById('to_init')
+    //resetImages: document.getElementById('reset-images'),
+    //submitTarget: document.getElementById('to_input_word-screen'),
+    //submitWord: document.getElementById('to_wait-screen'),
+    //ready: document.getElementById('to_read_target-screen'),
+    //next: document.getElementById('to_result-screen'),
+    //nextQuestion: document.getElementById('to_init')
 
 };
 /*
@@ -171,7 +171,7 @@ function initializeGame() {
                     //    少し待ってから遷移すると、ユーザーが結果を確認できる
                     setTimeout(() => {
                         showScreen('camera'); // 口パクゲーム画面へ
-                        setupCamera();
+                        //setupCamera();
                         //startCamera();      // カメラと顔検出を開始
                         // ゲームロジック側で gameState.gameImagePaths を参照してターゲットを作成する
                     }, 1500); // 1.5秒待つ (調整可能)
@@ -203,6 +203,7 @@ function initializeGame() {
             alert('サーバーとの通信に失敗しました。Flaskサーバーが起動しているか確認してください。');
             if(displayElements.analysisInfo) displayElements.analysisInfo.textContent = '通信エラーが発生しました。';
         }
+        showScreen('camera'); // 口パクゲーム画面へ
     }); // toCamera ボタンリスナーここまで
 
 } // initializeGame ここまで
@@ -241,9 +242,9 @@ async function generateImage(description) {
 }
 
 // 待機画面から回答画面へ
-buttons.ready.addEventListener('click', () => {
+/*buttons.ready.addEventListener('click', () => {
     showScreen('readTarget');
-});
+});*/
 
 
 // 画像生成処理
@@ -286,7 +287,7 @@ async function gene(prompt){
 
 
 // 回答処理
-buttons.next.addEventListener('click', () => {
+/*buttons.next.addEventListener('click', () => {
     console.log('Answer button clicked');
     const answer = inputs.answer.value.trim();
     console.log('Answer:', answer);
@@ -305,10 +306,10 @@ buttons.next.addEventListener('click', () => {
         `正解: ${gameState.description}`;
     
     showScreen('result');
-});
+});*/
 
 // 次の問題へ
-buttons.nextQuestion.addEventListener('click', () => {
+/*buttons.nextQuestion.addEventListener('click', () => {
     gameState.playerTurn = gameState.playerTurn === 1 ? 2 : 1;
     inputs.target.value = '';
     inputs.word.value = '';
@@ -316,7 +317,7 @@ buttons.nextQuestion.addEventListener('click', () => {
     displayElements.wordImage.style.display = 'none';
     gameState.usedWords.push("computer");
     showScreen('inputWord');
-});
+});*/
 
 // 画像アップロード関連の変数
 const uploadedImages = [];

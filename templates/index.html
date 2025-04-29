@@ -1,100 +1,53 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>パクパク曼荼羅</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <!-- TensorFlow.jsとface-landmarks-detection用のスクリプト（バージョン指定） -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@1.0.2"></script>
-    <script src="https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/dist/face-api.min.js"></script>
-    <script>
-        // TensorFlow.js初期化状態確認
-        window.addEventListener('DOMContentLoaded', function() {
-            console.log('TensorFlow.js loaded:', typeof tf !== 'undefined');
-            console.log('face-landmarks-detection loaded:', typeof faceLandmarksDetection !== 'undefined');
-            
-            if (typeof tf !== 'undefined') {
-                console.log('TensorFlow.js version:', tf.version);
-                // バックエンド初期化
-                tf.setBackend('webgl').then(() => {
-                    console.log('TensorFlow.js backend initialized:', tf.getBackend());
-                }).catch(err => {
-                    console.error('Failed to set backend:', err);
-                });
-            }
-        });
-    </script>
+  <meta charset="UTF-8">
+  <title>Face API - Mouth Detection Debug版</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    canvas, video {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+  </style>
 </head>
 <body>
-    <div id="title-screen"><!-- タイトル -->
-        <h1>パクパク曼荼羅</h1>
-        <button id="start-button">ゲームスタート</button>
+  <div id="title-screen"><!-- タイトル -->
+    <h1>パクパク曼荼羅</h1>
+    <button id="start-button">ゲームスタート</button>
+  </div>
+  <div id="image-input-screen"><!-- 複数画像入力画面 -->
+    <h1>今日食べたものの画像を入力してください</h1>
+    <div class="image-upload-container">
+        <input type="file" id="image-upload" accept="image/*" multiple>
+        <label for="image-upload" class="upload-button">画像を選択</label>
+        <p class="upload-instruction">または画像をここにドラッグ＆ドロップ</p>
     </div>
-    <div id="image-input-screen"><!-- 複数画像入力画面 -->
-        <h1>今日食べたものの画像を入力してください</h1>
-        <div class="image-upload-container">
-            <input type="file" id="image-upload" accept="image/*" multiple>
-            <label for="image-upload" class="upload-button">画像を選択</label>
-            <p class="upload-instruction">または画像をここにドラッグ＆ドロップ</p>
-        </div>
-        
-        <div id="preview-container" class="image-preview-container">
-            <!-- アップロードされた画像のプレビューがここに表示されます -->
-        </div>
-        <div id="analysis-info" style="margin-top: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-            <!-- 解析結果などがここに表示される想定 -->
-        </div>
-        <div id="loading" style="display: none; margin-top: 10px; color: blue;">処理中...</div>
-        <div class="button-container">
-            <button id="reset-images" class="secondary-button">リセット</button>
-            <button id="to-camera-screen" class="primary-button" disabled>次へ</button>
-        </div>
+    
+    <div id="preview-container" class="image-preview-container">
+        <!-- アップロードされた画像のプレビューがここに表示されます -->
     </div>
-    <div id="camera-screen"><!-- カメラ画像を表示 -->
-        <h1>カメラを起動しています...</h1>
-        <div class="camera-container">
-            <video id="video"  autoplay muted></video>
-            <canvas id="canvas" style="display:block; width:100%; max-width:640px; margin:10px auto; border:1px solid #999;"></canvas>
-        </div>
+    <div id="analysis-info" style="margin-top: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+        <!-- 解析結果などがここに表示される想定 -->
     </div>
-    <div id="input_target-screen"> <!-- お題の入力 -->
-        <h1>前回の入力から続くお題を入力してください！</h1>
-        <input type="text" id="input-word">
-        <button id="to_input_word-screen">決定</button>
+    <div id="loading" style="display: none; margin-top: 10px; color: blue;">処理中...</div>
+    <div class="button-container">
+        <button id="reset-images" class="secondary-button">リセット</button>
+        <button id="to-camera-screen" class="primary-button" disabled>次へ</button>
     </div>
-    <div id="input_word-screen"> <!-- お題を説明する文字の入力 -->
-        <h1 id="description">お題を説明する文字を入力してください！</h1>
-        <h2 id="current-word">お題 : シリトリ</h2>
-        <h2 id="attention">---漢字のみで単語を表してください---</h2>  <!-- お題を説明する文字の制限 -->
-        <input type="text" id="input-word">
-        <button id="to_wait-screen">決定</button>
-    </div>
-    <div id="wait-screen"> <!-- お題の入力 -->
-        <h1>画像を生成しています。プレイヤーを交代してください。</h1>
-        <button id="to_read_target-screen">交代しました</button>
-    </div>
-    <div id="read_target-screen"> <!-- お題の入力 -->
-        <h1>画像が生成されました。この画像は何を表しているでしょうか？</h1>
-        <div id="image-container" style="margin: 20px 0;">
-            <img id="word-image" src="" alt="単語の絵" style="max-width: 300px; max-height: 300px; display: none;">
-        </div>
-        <input type="text" id="input-word">
-        <button id="to_result-screen">決定</button>
-    </div>
+  </div>
+  <div id="camera-screen"><!-- カメラ画像を表示 -->
+    <h1>カメラを起動しています...</h1>
+    <video id="video" x = "100" width="640" height="480" autoplay muted></video>
+    <canvas id="overlay" width="640" height="480"></canvas>
+  </div>
 
-    <div id="result-screen"> <!-- お題の入力 -->
-        <h1>正解です。答えはコンピュータでした！</h1>
-        <div id="image-container" style="margin: 20px 0;">
-            <img id="word-image" src="" alt="単語の絵" style="max-width: 300px; max-height: 300px; display: none;">
-        </div>
-        <h2>お題 : コンピュータ</h2>
-        <h2>入力した文字 : 計算機電気情報処理</h2>
-        <button id="to_init">次の問題</button>
-    </div>
-     <!-- <script src="https://code.jquery.com/jquery-3.5.1.js"></script>-->
-    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+<!-- face-api.jsブラウザ向け版 -->
+<script src="https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/dist/face-api.min.js"></script>
+
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
