@@ -171,7 +171,8 @@ function initializeGame() {
                     //    少し待ってから遷移すると、ユーザーが結果を確認できる
                     setTimeout(() => {
                         showScreen('camera'); // 口パクゲーム画面へ
-                        startCamera();      // カメラと顔検出を開始
+                        setupCamera();
+                        //startCamera();      // カメラと顔検出を開始
                         // ゲームロジック側で gameState.gameImagePaths を参照してターゲットを作成する
                     }, 1500); // 1.5秒待つ (調整可能)
 
@@ -365,7 +366,8 @@ function setupImageUpload() {
     // 次へボタンの処理
     buttons.toCamera.addEventListener('click', () => {
         showScreen('camera');
-        startCamera();
+        setupCamera();
+        //startCamera();
     });
 }
 
@@ -454,6 +456,72 @@ const MOUTH_MIN_SIZE = 10; // 口の開き具合の最小閾値（必要に応�
 // canvasとvideoのスケール比率
 let scaleX = 1;
 let scaleY = 1;
+
+async function setupCamera() {
+    const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+  
+    // モデル読み込み
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+  
+    // カメラ起動
+    navigator.mediaDevices.getUserMedia({ video: {} })
+      .then(stream => { video.srcObject = stream; })
+      .catch(err => console.error('カメラにアクセスできません:', err));
+    video.addEventListener('play', () => {
+      const detect = async () => {
+        const options = new faceapi.TinyFaceDetectorOptions({
+        inputSize: 224,
+        scoreThreshold: 0.5
+        });
+        const detection = await faceapi
+        .detectSingleFace(video, options)
+        .withFaceLandmarks();
+        console.log('Detection result:', detection);
+        
+        if (detection) {
+        const resizedDetection = faceapi.resizeResults(detection, {
+            width: video.width,
+            height: video.height
+        });
+        
+        // ★ ここで mouth のポイントだけ抜き出す
+        const allLandmarks = resizedDetection.landmarks.positions; // ←ここ重要！
+        const mouth = allLandmarks.slice(48, 68); // ←口は48～67番！
+    
+        console.log('Mouth landmarks:', mouth);
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        if (mouth && mouth.length > 0) {
+            const xs = mouth.map(p => p.x);
+            const ys = mouth.map(p => p.y);
+            const minX = Math.min(...xs);
+            const minY = Math.min(...ys);
+            const maxX = Math.max(...xs);
+            const maxY = Math.max(...ys);
+        
+            const width = maxX - minX;
+            const height = maxY - minY;
+        
+            context.beginPath();
+            context.lineWidth = 3;
+            context.strokeStyle = 'red';
+            context.rect(minX, minY, width, height);
+            context.stroke();
+        }
+        
+        }
+        
+        requestAnimationFrame(detect);
+          
+        };
+      detect();
+      //context.fillStyle = 'red';
+      //context.fillRect(5, 10, 200, 300);
+    });
+  }
 
 // 顔検出器の読み込み
 async function loadFaceDetector() {
