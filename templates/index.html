@@ -7,8 +7,9 @@
   <style>
     canvas, video {
       position: absolute;
-      left: 0;
-      top: 0;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
     }
   </style>
 </head>
@@ -38,9 +39,10 @@
     </div>
   </div>
   <div id="camera-screen"><!-- カメラ画像を表示 -->
-    <h1>カメラを起動しています...</h1>
-    <video id="video" x = "100" width="640" height="480" autoplay muted></video>
-    <canvas id="overlay" width="640" height="480"></canvas>
+    <div class="camera-container">
+      <video id="video" width="640" height="480" autoplay muted></video>
+      <canvas id="overlay" width="640" height="480"></canvas>
+    </div>
   </div>
 
 
