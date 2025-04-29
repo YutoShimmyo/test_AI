@@ -72,12 +72,7 @@ function draw(context){
         object.draw(context);
     }); //オブジェクトのdrawメソッドを呼び出す
 
-    // スコア表示
-    if (context) {
-        context.fillStyle = '#FFFF00';
-        context.font = '20px Arial';
-        context.fillText(`スコア: ${score}`, 10, 70);
-    }
+    document.getElementById('score-value').innerText = score; // スコアを表示
 }
 
 const loadImage = src => new Promise((resolve, reject) => {

@@ -54,6 +54,10 @@
     </div>
   </div>
   <div id="camera-screen"><!-- カメラ画像を表示 -->
+    <div id="score-display" style="position: fixed; top: 20px; right: 20px; color: white; font-size: 24px; font-weight: bold; background-color: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 5px; z-index: 1000;">
+      Score: <span id="score-value">0</span>
+    </div>
+    
     <div class="camera-container">
       <div class="video-container">
         <video id="video" width="640" height="480" autoplay muted style="transform: scaleX(-1);"></video>
