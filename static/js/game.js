@@ -17,9 +17,10 @@ function updateMouthPosition(x, y, size) {
     mouthPosition.y = y;
     mouthPosition.size = size || 20; // サイズが指定されなければデフォルト値を使用
     
+    isMouthOpened = false;
     // 口の開閉状態を判定
     // 前回よりも大きくなったら「開いた」と判定
-    if (mouthPosition.size > prevMouthSize + 5) {
+    /*if (mouthPosition.size > prevMouthSize + 5) {
         isMouthOpened = true;
         console.log('口が開きました - サイズ:', mouthPosition.size);
     }
@@ -27,7 +28,7 @@ function updateMouthPosition(x, y, size) {
     else if (isMouthOpened && mouthPosition.size < MOUTH_CLOSE_THRESHOLD) {
         isMouthOpened = false;
         console.log('口が閉じました - サイズ:', mouthPosition.size);
-    }
+    }*/
 
     // 口の円オブジェクトが存在しなければ作成
     if (!mouthCircle) {
@@ -191,7 +192,7 @@ class Target extends GameObject {
             const isColliding = distance < (Math.min(this.width, this.height) / 2 + mouthCircle.radius);
             
             // 衝突していて、かつ「口が開いた状態から閉じた瞬間」の場合のみ捕獲
-            if (isColliding && isMouthOpened === false && prevMouthSize > MOUTH_CLOSE_THRESHOLD) {
+            if (isColliding ) { //isMouthOpened === false && prevMouthSize > MOUTH_CLOSE_THRESHOLD
                 console.log('ターゲットを捕獲！口のサイズ変化:', prevMouthSize, '=>', mouthPosition.size);
                 
                 // 衝突時の処理

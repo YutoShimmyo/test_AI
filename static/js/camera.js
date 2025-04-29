@@ -57,13 +57,13 @@ async function setup() {
                 const width = maxX - minX;
                 const height = maxY - minY;
             
-                context.beginPath();
+                /*context.beginPath();
                 context.lineWidth = 3;
                 context.strokeStyle = 'red';
                 context.rect(minX, minY, width, height);
-                context.stroke();
+                context.stroke();*/
 
-                game_draw([mouth[0].x, mouth[0].y, mouth[0].size], context);
+                game_draw([(minX+maxX)/2, (minY+maxY)/2, height / 2], context);
             }
             
             }
